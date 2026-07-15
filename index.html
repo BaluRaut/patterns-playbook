@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Patterns Pro Playbook — with real-world uses</title>
+<meta name="description" content="The Gang of Four patterns plus modern ones, taught with real systems — React.createElement, OkHttp builders, Express middleware, HikariCP pools, Kafka pub/sub, circuit breakers — not toy Shape/Animal demos. Each pattern: the problem it solves, What/Why/How, an ASCII diagram, an 'in the wild' callout, real code, and when NOT to use it.">
+<style>
+:root{
+  --bg:#0b0e14; --panel:#11151f; --card:#121826; --card2:#0f1420;
+  --border:#242c3d; --border2:#2e3850;
+  --text:#dce3f0; --muted:#8f99ad; --dim:#6b7488;
+  --found:#a78bfa; --fe:#38bdf8; --api:#f472b6; --db:#34d399; --ops:#fbbf24;
+  --green:#4ade80; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa;
+  --k:#ff7b9c; --s:#9ece6a; --key:#7aa2f7; --n:#ff9e64; --com:#565f89; --v:#e0af68; --cmd:#5eead4; --prompt:#565f89; --fn:#c4b5fd;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(1100px 520px at 18% -10%, #1e163a 0%, transparent 55%),
+    radial-gradient(900px 460px at 85% -8%, #2a0f2a 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6; font-size:16px;
+}
+.wrap{max-width:980px; margin:0 auto; padding:0 20px 80px}
+.hero{padding:56px 0 8px; text-align:center}
+.badge{display:inline-block; font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:#c4b5fd; border:1px solid #4c1d95; background:#1a1230; padding:6px 14px; border-radius:999px; font-weight:600}
+h1{font-size:2.5rem; margin:18px 0 10px; letter-spacing:-.02em; background:linear-gradient(100deg,#a78bfa,#f472b6 52%,#38bdf8); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.sub{color:var(--muted); max-width:720px; margin:0 auto; font-size:1.02rem}
+.spec{display:inline-block; margin-top:12px; font-size:.76rem; color:var(--dim); border:1px solid var(--border); background:var(--panel); padding:4px 12px; border-radius:999px}
+.legend{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:16px; font-size:.78rem; color:var(--muted)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:10px; height:10px; border-radius:3px; display:inline-block}
+.toolbar{position:sticky; top:0; z-index:50; display:flex; justify-content:center; gap:8px; padding:10px 0; margin-top:18px; background:linear-gradient(var(--bg) 80%,transparent)}
+.toolbar button{background:var(--panel); color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:6px 13px; font-size:.85rem; cursor:pointer; font-weight:600}
+.toolbar button:hover{color:var(--text); border-color:var(--border2)}
+.toc{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:22px 0 10px}
+.toc a{display:inline-flex; align-items:center; gap:7px; text-decoration:none; background:var(--panel); border:1px solid var(--border); color:var(--muted); font-size:.78rem; padding:5px 11px; border-radius:999px; transition:.15s}
+.toc a b{color:var(--found); font-size:.72rem}
+.toc a.fe-chip b{color:var(--fe)}
+.toc a.api-chip b{color:var(--api)}
+.toc a.db-chip b{color:var(--db)}
+.toc a:hover{color:var(--text); border-color:var(--border2); background:#161b28}
+.part{margin:64px 0 8px; text-align:center; font-size:.8rem; letter-spacing:.28em; text-transform:uppercase; color:var(--dim); font-weight:700}
+.part span{color:var(--found)}
+.part.fe span{color:var(--fe)}
+.part.api span{color:var(--api)}
+.part.db span{color:var(--db)}
+details.card{background:var(--card); border:1px solid var(--border); border-radius:14px; margin:14px 0; overflow:hidden}
+details.card[open]{border-color:var(--border2)}
+summary{list-style:none; cursor:pointer; padding:16px 20px; display:flex; align-items:baseline; gap:14px; user-select:none}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--card2)}
+.num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:800; color:var(--found); font-size:1.05rem; min-width:30px}
+.fe-card .num{color:var(--fe)}
+.api-card .num{color:var(--api)}
+.db-card .num{color:var(--db)}
+.ttl{font-weight:700; font-size:1.06rem; flex:1}
+.star{font-size:.66rem; font-weight:700; letter-spacing:.06em; white-space:nowrap; color:var(--amber); border:1px solid #4d3d1a; background:#211a0b; padding:2px 9px; border-radius:999px}
+.chev{color:var(--dim); transition:.2s; font-size:.8rem}
+details[open] .chev{transform:rotate(90deg)}
+.body{padding:4px 22px 22px; border-top:1px solid var(--border)}
+.scenario{color:var(--muted); margin:14px 0 4px}
+.scenario b{color:var(--text)}
+.wwh{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:16px 0}
+@media(max-width:640px){.wwh{grid-template-columns:1fr}}
+.wwh > div{background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:11px 14px}
+.wwh h5{font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; margin-bottom:5px; font-weight:800}
+.wwh .what h5{color:var(--blue)} .wwh .why h5{color:var(--amber)} .wwh .how h5{color:var(--green)}
+.wwh p{font-size:.9rem; color:#c2ccdb}
+.wwh code{font-family:ui-monospace,Menlo,monospace; font-size:.85em; color:#c4b5fd}
+.ascii{margin:16px 0; border:1px solid #2c2450; border-radius:10px; overflow:hidden; background:#120b1a}
+.ascii .lbl{font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--found); background:#1a1230; padding:6px 14px; border-bottom:1px solid #2c2450}
+.ascii pre{background:transparent; padding:16px; overflow-x:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.82rem; line-height:1.5; color:#d2c7ea; white-space:pre}
+.analogy{display:flex; gap:12px; margin:12px 0; padding:13px 16px; background:#1a1230; border:1px solid #3a2c62; border-left:3px solid #a78bfa; border-radius:0 10px 10px 0; color:#d3c7e6; font-size:.95rem}
+.analogy.two{background:#0e1a22; border-color:#1d3646; border-left-color:#38bdf8; color:#bcd4e4}
+.analogy .ic{font-size:1.1rem}
+.analogy b{color:#ddd6fe}
+.analogy.two b{color:#bae6fd}
+.code{margin:14px 0; border:1px solid var(--border); border-radius:10px; overflow:hidden}
+.code-label{font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--dim); background:var(--card2); padding:6px 14px; border-bottom:1px solid var(--border)}
+pre{background:#0c1018; padding:14px 16px; overflow-x:auto; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.85rem; line-height:1.55; color:#c8d3e8}
+.k{color:var(--k)} .s{color:var(--s)} .key{color:var(--key)} .n{color:var(--n)}
+.com{color:var(--com); font-style:italic} .v{color:var(--v)} .cmd{color:var(--cmd); font-weight:600} .prompt{color:var(--prompt)} .fn{color:var(--fn)}
+.simple{display:flex; gap:12px; margin:16px 0; padding:14px 16px; background:#0e1a17; border:1px solid #1f3d33; border-left:3px solid #34d399; border-radius:0 10px 10px 0; color:#bfe8d6; font-size:.96rem}
+.simple .ic{font-size:1.15rem}
+.simple b{color:#6ee7b7}
+.simple .tag{display:block; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:#34d399; font-weight:800; margin-bottom:3px}
+.wild{display:flex; gap:12px; margin:14px 0; padding:13px 16px; background:#0e1622; border:1px solid #1d3a52; border-left:3px solid #38bdf8; border-radius:0 10px 10px 0; color:#bcd7ea; font-size:.94rem}
+.wild .ic{font-size:1.1rem}
+.wild b{color:#bae6fd}
+.wild .tag{display:block; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:#7dd3fc; font-weight:800; margin-bottom:3px}
+table{border-collapse:collapse; width:100%; margin:14px 0; font-size:.87rem}
+th,td{border:1px solid var(--border); padding:7px 12px; text-align:left}
+th{background:var(--card2); color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em}
+td{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.84rem}
+.dodont{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0}
+@media(max-width:720px){.dodont{grid-template-columns:1fr}}
+.do,.dont{border-radius:10px; padding:13px 16px; font-size:.92rem}
+.do{background:#0d1a12; border:1px solid #1e3a28}
+.dont{background:#1d1012; border:1px solid #43222a}
+.do h4{color:var(--green); font-size:.82rem; margin-bottom:8px; letter-spacing:.04em}
+.dont h4{color:var(--red); font-size:.82rem; margin-bottom:8px; letter-spacing:.04em}
+.do ul,.dont ul{margin-left:18px}
+.do li,.dont li{margin:5px 0; color:#b8c2d4}
+.do li::marker{color:var(--green)} .dont li::marker{color:var(--red)}
+.do code,.dont code,.gotcha code,.scenario code,.analogy code,.simple code,.wild code{font-family:ui-monospace,Menlo,monospace; font-size:.85em; background:#0c1018; border:1px solid var(--border); padding:1px 6px; border-radius:5px; color:#c4b5fd}
+.gotcha{margin:14px 0; padding:13px 16px; border-radius:0 10px 10px 0; font-size:.94rem; background:#1e1610; border:1px solid #43301a; border-left:3px solid var(--amber); color:#dcc6a4}
+.gotcha b{color:#fcd34d}
+.quiz{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:26px; margin:20px 0}
+.quiz .qhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.quiz .qintro{color:var(--muted);font-size:.95rem;max-width:640px}
+.quiz .qmeta{font-size:.85rem;color:var(--dim);white-space:nowrap}
+.quiz .qmeta b{color:var(--found)}
+.progress{height:7px;background:var(--card2);border:1px solid var(--border);border-radius:999px;overflow:hidden;margin:14px 0 4px}
+.progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a78bfa,#f472b6);transition:width .4s}
+.q{margin:20px 0;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.q p.qt{font-weight:700;margin-bottom:10px}
+.q p.qt .tag{font-size:.68rem;font-weight:700;color:var(--found);border:1px solid var(--border);background:var(--card2);border-radius:999px;padding:1px 8px;margin-right:8px;letter-spacing:.04em}
+.q label{display:block;padding:7px 12px;margin:5px 0;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.93rem;color:var(--muted)}
+.q label:hover{border-color:var(--border2);color:var(--text)}
+.q label.right{border-color:var(--green);color:var(--green);background:#0d1a12}
+.q label.wrong{border-color:var(--red);color:var(--red);background:#1d1012}
+.q.revealed label{cursor:default}
+.q .why{display:none;margin-top:8px;font-size:.88rem;color:var(--amber)}
+.q.revealed .why{display:block}
+.quiz .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.quiz button.check{background:var(--found);color:#0a0a1c;border:0;padding:10px 22px;border-radius:10px;font-weight:700;font-size:.92rem;cursor:pointer}
+.quiz button.next{background:#1c2333;color:var(--text);border:1px solid var(--border2);padding:10px 22px;border-radius:10px;font-weight:700;font-size:.92rem;cursor:pointer}
+.quiz button.reset{background:transparent;color:var(--dim);border:1px solid var(--border);font-weight:600;font-size:.82rem;padding:7px 14px;border-radius:10px;cursor:pointer}
+.quiz button:hover{filter:brightness(1.08)}
+.quiz .roundscore{font-weight:700;color:var(--found);font-size:1rem;margin-left:6px}
+.quiz .done{display:none;text-align:center;padding:14px}
+.quiz .done h3{font-size:1.4rem;margin-bottom:8px;color:var(--found)}
+.quiz .done p{color:var(--muted)}
+footer{margin-top:60px; text-align:center; color:var(--dim); font-size:.85rem; line-height:1.7}
+footer a{color:var(--muted)}
+/*mobile-fullbleed*/
+@media(max-width:600px){
+  .wrap{padding-left:0;padding-right:0}
+  .hero,.toolbar,.toc,.part,h2.cat{padding-left:15px;padding-right:15px}
+  details.card,.card{border-left:0;border-right:0;border-radius:0}
+  .quiz{border-left:0;border-right:0;border-radius:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">Design Patterns · with real-world uses · Field Guide</span>
+  <h1>Design Patterns Pro Playbook</h1>
+  <p class="sub">The Gang of Four patterns plus the modern ones, taught through <b>systems you actually use</b> — <code>React.createElement</code>, OkHttp builders, Express middleware, HikariCP pools, Kafka, circuit breakers — <i>not</i> <code>Shape</code>, <code>Animal</code>, and <code>Pizza</code>. Each with the problem it solves, real code, and when <i>not</i> to reach for it.</p>
+  <div class="spec">Every card ends with a "🌍 In the wild" note — the real library or system that IS this pattern</div>
+  <div class="legend">
+    <span><i style="background:var(--blue)"></i> What it is</span>
+    <span><i style="background:var(--amber)"></i> Why it matters</span>
+    <span><i style="background:var(--green)"></i> How it works</span>
+    <span><i style="background:#7dd3fc"></i> In the wild</span>
+    <span><i style="background:var(--found)"></i> ASCII diagram</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button onclick="fz(-1)">A−</button>
+  <button onclick="fz(0)">A</button>
+  <button onclick="fz(1)">A+</button>
+  <button onclick="toggleAll(true)">Expand all</button>
+  <button onclick="toggleAll(false)">Collapse all</button>
+</div>
+
+<nav class="toc">
+  <a href="#t1"><b>01</b>Why patterns</a>
+  <a href="#t2"><b>02</b>Factory Method</a>
+  <a href="#t3"><b>03</b>Abstract Factory</a>
+  <a href="#t4"><b>04</b>Builder</a>
+  <a href="#t5"><b>05</b>Singleton</a>
+  <a href="#t6"><b>06</b>Prototype</a>
+  <a href="#t7"><b>07</b>Object Pool</a>
+  <a class="fe-chip" href="#t8"><b>08</b>Adapter</a>
+  <a class="fe-chip" href="#t9"><b>09</b>Decorator</a>
+  <a class="fe-chip" href="#t10"><b>10</b>Facade</a>
+  <a class="fe-chip" href="#t11"><b>11</b>Proxy</a>
+  <a class="fe-chip" href="#t12"><b>12</b>Composite</a>
+  <a class="fe-chip" href="#t13"><b>13</b>Bridge</a>
+  <a class="fe-chip" href="#t14"><b>14</b>Flyweight</a>
+  <a class="api-chip" href="#t15"><b>15</b>Strategy</a>
+  <a class="api-chip" href="#t16"><b>16</b>Observer</a>
+  <a class="api-chip" href="#t17"><b>17</b>Command</a>
+  <a class="api-chip" href="#t18"><b>18</b>Chain of Responsibility</a>
+  <a class="api-chip" href="#t19"><b>19</b>State</a>
+  <a class="api-chip" href="#t20"><b>20</b>Template Method</a>
+  <a class="api-chip" href="#t21"><b>21</b>Iterator</a>
+  <a class="api-chip" href="#t22"><b>22</b>Mediator</a>
+  <a class="api-chip" href="#t23"><b>23</b>Memento</a>
+  <a class="api-chip" href="#t24"><b>24</b>Visitor</a>
+  <a class="db-chip" href="#t25"><b>25</b>Repository</a>
+  <a class="db-chip" href="#t26"><b>26</b>Pub/Sub event bus</a>
+  <a class="db-chip" href="#t27"><b>27</b>Circuit Breaker &amp; Retry</a>
+  <a class="db-chip" href="#t28"><b>28</b>Anti-patterns</a>
+  <a href="#quiz"><b>🎯</b>Quiz — 5 per round</a>
+</nav>
+
+<main>
+
+<div class="part">Part I · <span>Creational — how objects get made</span></div>
+
+<details class="card" id="t1">
+<summary><span class="num">01</span><span class="ttl">Why design patterns — shared vocabulary for recurring problems</span><span class="star">★ start here</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> in a review you say "let's inject a strategy here and wrap the client in a decorator with a circuit breaker" — and the whole team instantly knows the shape of the solution. That's the real value of patterns: <b>names for solutions that recur</b>, so you design and communicate faster and recognize structures already proven in the wild.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Design patterns</b> are named, reusable solutions to problems that keep recurring in software design — a shared vocabulary (from the 1994 "Gang of Four" book and beyond), not copy-paste code.</p></div>
+  <div class="why"><h5>Why</h5><p>They compress communication ("it's an adapter"), encode hard-won tradeoffs, and help you <b>recognize</b> structures you already see in frameworks — so you don't reinvent (or misuse) them.</p></div>
+  <div class="how"><h5>How</h5><p>Learn the <b>problem each solves</b>, not just its diagram. Reach for one when you hit its problem — never apply a pattern for its own sake (topic 28).</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Three families (plus modern architectural ones)</div><pre>   CREATIONAL   how objects are CREATED     Factory, Builder, Singleton, Pool…
+   STRUCTURAL   how objects are COMPOSED    Adapter, Decorator, Facade, Proxy…
+   BEHAVIORAL   how objects INTERACT        Strategy, Observer, Command, State…
+   MODERN       app/infra architecture      Repository, Pub/Sub, Circuit Breaker
+   a pattern = (recurring problem) → (proven solution) → (its tradeoffs)</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Patterns are chess openings:</b> "Sicilian Defense" names a whole plan both players recognize. You don't play an opening to show off — you play it because the position calls for it. Same with patterns: the situation calls for a Strategy, so you name and use one.</div></div>
+<div class="analogy two"><span class="ic">📚</span><div><b>Framework docs already speak patterns:</b> React "render props," Spring "template," Node "streams/observer," Express "middleware chain." Learning patterns is learning to <i>read</i> the frameworks you already depend on.</div></div>
+
+<div class="code"><div class="code-label">Same idea, one shared word</div><pre class="js">// without vocabulary — a long explanation:
+"make an object that stands in for the real client, and around it wrap
+ something that adds retry, and something that trips after N failures…"
+
+// with vocabulary — one sentence a reviewer parses instantly:
+const client = new CircuitBreaker(new RetryDecorator(new HttpClient(), 3))
+//               ^ pattern 27          ^ pattern 09 (decorator)   ^ the real thing
+// the NAMES carry the design. that's what patterns buy you.</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Design patterns are just <b>named recipes</b> for problems programmers keep bumping into. Once everyone knows the recipe names, you can say "let's use the such-and-such recipe" and skip the long explanation. The point isn't to use fancy recipes everywhere — it's to recognize when you're facing a problem someone already solved well, and reuse that solution.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>The GoF book <i>Design Patterns</i> (1994) named 23 of these; frameworks are built from them — React (composition, HOCs/decorators, render props), Spring (template method, proxy, factory), Node streams (observer/iterator), Express/Rack (chain of responsibility). Cloud resilience libraries (Hystrix, Polly, resilience4j) ship circuit breakers and retries as named building blocks.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Learn the <b>problem</b> each pattern solves and its tradeoffs</li>
+<li>Use patterns to communicate design intent quickly</li>
+<li>Recognize patterns already in your frameworks and lean on them</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Apply a pattern because it's clever — apply it because you have its problem</li>
+<li>Treat the GoF diagrams as mandatory boilerplate to reproduce verbatim</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> patterns are a <b>vocabulary, not a checklist</b>. The classic failure (topic 28) is "pattern fever" — forcing Singletons, Factories, and Visitors onto code that a plain function or a language feature would handle better. Modern languages absorbed several GoF patterns as built-ins (iterators, first-class functions replacing Strategy/Command, <code>Optional</code> replacing Null Object). Know them to recognize and communicate — reach for them only when the recurring problem actually shows up.</div>
+</div>
+</details>
+
+<details class="card" id="t2">
+<summary><span class="num">02</span><span class="ttl">Factory Method — decide the concrete type in one place</span><span class="star">★ core</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> your code needs a <code>Logger</code>, but which one — console in dev, JSON-to-stdout in prod, a no-op in tests — depends on config. Scattering <code>new JsonLogger()</code> everywhere hard-codes the choice. A <b>factory method</b> centralizes "which concrete class to build" behind a single call: <code>Logger.create(env)</code>.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Factory Method</b>: a method whose job is to <b>create and return an object</b>, deciding the concrete type internally. Callers ask for the abstraction and get back a ready-made instance.</p></div>
+  <div class="why"><h5>Why</h5><p>It puts the "which class + how to build it" decision in <b>one place</b>, so callers stay decoupled from concrete constructors and construction logic isn't duplicated.</p></div>
+  <div class="how"><h5>How</h5><p>Replace scattered <code>new X()</code> with a factory function/method that returns the interface type and picks the implementation (by config, input, or platform).</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">One place decides the concrete type</div><pre>   callers:  const log = makeLogger(env)     ← ask for a Logger
+                          │
+                   ┌──────┴───────┐  factory decides:
+              env==='prod'?   env==='test'?
+                   │               │
+              JsonLogger       NoopLogger      (else) ConsoleLogger
+   change the selection rule ONCE, in the factory — not at every call site</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b><code>React.createElement</code> is a factory:</b> JSX compiles to <code>React.createElement(type, props)</code>, which builds the right element object for you — you never <code>new</code> a fiber. <code>document.createElement('div')</code> is the DOM's factory doing the same.</div></div>
+<div class="analogy two"><span class="ic">🏭</span><div><b>Config-driven construction:</b> <code>logging.getLogger()</code> (Python), a <code>DriverManager.getConnection(url)</code> that returns the right JDBC driver, and <code>DocumentBuilderFactory</code> all hide "which concrete class + how to build it" behind one call.</div></div>
+
+<div class="code"><div class="code-label">A factory picks the implementation by config</div><pre class="js">interface Logger { info(msg: string): void; error(msg: string): void }
+class ConsoleLogger implements Logger { /* ... */ }
+class JsonLogger    implements Logger { /* ... */ }
+class NoopLogger    implements Logger { info(){} error(){} }
+
+function makeLogger(env: string): Logger {         // the factory method
+  if (env === 'production') return new JsonLogger()
+  if (env === 'test')       return new NoopLogger()
+  return new ConsoleLogger()
+}
+// callers: const log = makeLogger(process.env.NODE_ENV)  — no `new` at call sites</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Instead of every part of your code knowing how to build the exact thing it needs, they all ask <b>one helper</b>: "give me a logger." The helper figures out which kind to make based on the situation and hands it over. If you later change how loggers are chosen, you fix the one helper — not a hundred places that each said "build a JSON logger."</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><code>React.createElement</code> / <code>document.createElement</code>, Python <code>logging.getLogger</code>, Java <code>DocumentBuilderFactory</code> / <code>Calendar.getInstance()</code> / <code>DriverManager.getConnection</code>, AWS SDK <code>S3Client.builder().build()</code>, and ORM <code>createConnection(config)</code>. Any <code>createX()</code> / <code>makeX()</code> / <code>getX()</code> that hides which concrete class you get is a factory.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Centralize "which implementation + how to build it" in a factory</li>
+<li>Return the interface type so callers stay decoupled</li>
+<li>Use it when construction depends on config, input, or platform</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Wrap a single trivial <code>new</code> in a factory for no reason</li>
+<li>Let the factory grow into a God object that builds unrelated things</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> in languages with <b>first-class functions</b>, a factory is often just a function — you rarely need the full GoF "creator subclass overrides factoryMethod()" hierarchy. And don't confuse Factory with <b>Dependency Injection</b>: a factory <i>creates</i> objects on demand (you call it when you need one); DI <i>supplies</i> already-created collaborators (you receive them). They compose — a DI container often uses factories internally — but reaching for a factory when you actually just want to inject a dependency adds a needless layer.</div>
+</div>
+</details>
+
+<details class="card" id="t3">
+<summary><span class="num">03</span><span class="ttl">Abstract Factory — families of related objects</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> your app targets AWS <i>and</i> GCP. On AWS you need an S3 blob store, SQS queue, and CloudWatch metrics; on GCP, GCS, Pub/Sub, and Stackdriver. You must never mix an S3 store with a Pub/Sub queue. An <b>abstract factory</b> hands you a <b>whole compatible family</b> at once: <code>cloud.blobStore()</code>, <code>cloud.queue()</code>, <code>cloud.metrics()</code> — all AWS, or all GCP.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Abstract Factory</b>: an interface for creating a <b>family of related objects</b> without specifying their concrete classes, so the whole set stays consistent.</p></div>
+  <div class="why"><h5>Why</h5><p>It guarantees the pieces you get <b>work together</b> (all AWS, or all GCP, or all "dark theme") and lets you swap the entire family by swapping one factory.</p></div>
+  <div class="how"><h5>How</h5><p>Define a factory interface with several create-methods; implement one factory per family; inject the chosen factory and build all pieces through it.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Pick the family once; every piece matches</div><pre>   interface CloudFactory { blobStore()  queue()  metrics() }
+        ┌───────────────────────┴───────────────────────┐
+   AwsFactory                                        GcpFactory
+     blobStore → S3        queue → SQS                blobStore → GCS
+     metrics   → CloudWatch                           queue → PubSub, metrics → Stackdriver
+   inject AwsFactory ⇒ you CAN'T accidentally get an S3 store with a PubSub queue</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Cross-platform UI toolkits are the textbook case:</b> a <code>WidgetFactory</code> that makes a matching <code>Button</code>, <code>Checkbox</code>, and <code>Menu</code> for macOS <i>or</i> Windows — so you never render a Windows button next to a macOS checkbox. Same shape as "all-AWS vs all-GCP."</div></div>
+<div class="analogy two"><span class="ic">🎨</span><div><b>Theme providers:</b> a <code>ThemeFactory</code> yields a consistent set of colors, spacings, and components for "dark" or "light." One switch changes the entire coordinated family, not thirty individual choices.</div></div>
+
+<div class="code"><div class="code-label">A factory per cloud; the family stays consistent</div><pre class="js">interface CloudFactory {
+  blobStore(): BlobStore
+  queue(): Queue
+  metrics(): Metrics
+}
+class AwsFactory implements CloudFactory {
+  blobStore(){ return new S3Store() }
+  queue(){ return new SqsQueue() }
+  metrics(){ return new CloudWatch() }
+}
+class GcpFactory implements CloudFactory {
+  blobStore(){ return new GcsStore() }
+  queue(){ return new PubSubQueue() }
+  metrics(){ return new Stackdriver() }
+}
+// wire once: const cloud: CloudFactory = onAws ? new AwsFactory() : new GcpFactory()
+// everything built from `cloud` is guaranteed same-family</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Sometimes you need a <b>matching set</b> of things — like a whole outfit where the shoes, belt, and bag all go together. An abstract factory is the shop assistant who, once you pick "the summer collection," hands you pieces that all match. You can't accidentally end up with winter boots and a summer hat, because everything came from the same coordinated set.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Cross-platform UI toolkits (Swing look-and-feels, Qt styles), cloud-provider abstraction layers, database provider families in ORMs/EF Core (<code>DbProviderFactory</code>), Java's <code>DocumentBuilderFactory</code>/<code>TransformerFactory</code>, and theming systems. Whenever swapping one setting must swap a <i>coordinated group</i> of implementations together, it's an abstract factory.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when several objects must come from the <b>same</b> family</li>
+<li>Swap the entire family by injecting a different factory</li>
+<li>Keep the create-methods cohesive (one real family per factory)</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Reach for it when you only ever build one kind of object (that's Factory Method)</li>
+<li>Add a factory family for variation that will never have a second member</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Abstract Factory is one of the <b>heaviest</b> creational patterns — lots of interfaces and classes for the guarantee of family-consistency. If you have <i>one</i> product that varies, you want a plain Factory Method (topic 2), not this. And adding a <b>new product</b> to the family (say, <code>secrets()</code>) forces you to edit <i>every</i> factory implementation — so only pay for it when you genuinely have multiple, related products that must stay in lockstep across swappable families.</div>
+</div>
+</details>
+
+<details class="card" id="t4">
+<summary><span class="num">04</span><span class="ttl">Builder — assemble complex objects step by step</span><span class="star">★ very common</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> constructing an HTTP request needs a URL, method, headers, query params, body, timeout, retries — most optional. A constructor with ten positional args (<code>new Request(url, 'POST', null, null, headers, …)</code>) is unreadable and error-prone. A <b>builder</b> assembles it fluently: <code>request().url(u).header('Auth', t).timeout(5000).build()</code>.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Builder</b>: separate the step-by-step <b>construction</b> of a complex object from its representation, usually via a fluent chain that ends in <code>build()</code> (which validates invariants).</p></div>
+  <div class="why"><h5>Why</h5><p>It kills the "telescoping constructor" (many overloads / long positional arg lists), makes optional fields readable, and validates the whole thing once at <code>build()</code> — so you never get a half-configured object.</p></div>
+  <div class="how"><h5>How</h5><p>A builder object accumulates settings via chainable methods (each returns <code>this</code>), then <code>build()</code> constructs and validates the final immutable object.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Fluent steps → one validated object</div><pre>   request()                     ❌ vs telescoping constructor:
+     .url('/orders')                new Request('/orders','POST',null,
+     .method('POST')                            headers,null,5000,3,false…)
+     .header('Auth', token)           which null is the body? good luck.
+     .timeout(5000)
+     .retries(3)
+     .build()   ← validates here, returns an immutable Request</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Query builders are builders:</b> Knex/jOOQ/SQLAlchemy — <code>db('users').where('active', true).orderBy('name').limit(10)</code> — accumulate a complex SQL statement step by step, then execute. Each call returns the builder so you can keep chaining.</div></div>
+<div class="analogy two"><span class="ic">🌐</span><div><b>HTTP clients ship builders:</b> OkHttp's <code>Request.Builder</code>, Java's <code>HttpRequest.newBuilder()</code>, and axios/fetch config objects all assemble a request from many optional parts and validate at the end.</div></div>
+
+<div class="code"><div class="code-label">A fluent request builder that validates at build()</div><pre class="js">class RequestBuilder {
+  private req: any = { method: 'GET', headers: {}, timeout: 30000 }
+  url(u: string){ this.req.url = u; return this }          // each step returns this
+  method(m: string){ this.req.method = m; return this }
+  header(k: string, v: string){ this.req.headers[k] = v; return this }
+  timeout(ms: number){ this.req.timeout = ms; return this }
+  build(): Request {
+    if (!this.req.url) throw new Error('url is required')   // invariant checked ONCE
+    return Object.freeze(this.req)                          // immutable result
+  }
+}
+const r = new RequestBuilder().url('/orders').method('POST').header('Auth', tok).build()</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>When a thing has lots of optional parts, don't cram them all into one giant "make it" call where you can't tell which blank is which. Instead, <b>add the parts one at a time</b> with clear names — "set the URL," "add this header," "set a 5-second timeout" — and then say "build it." At the end it checks everything's sensible and hands you the finished, locked object.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>OkHttp <code>Request.Builder</code>, Java <code>HttpRequest</code>/<code>StringBuilder</code>/<code>Stream.Builder</code>, query builders (Knex, jOOQ, SQLAlchemy, ActiveRecord's chainable scopes), Kubernetes manifest builders, protobuf message builders, Flutter widget trees, and "test data builders" (<code>aUser().withEmail(...).build()</code>) that keep test setup readable. Lombok's <code>@Builder</code> generates them automatically.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it for objects with many optional/complex parts</li>
+<li>Validate all invariants once in <code>build()</code> and return something immutable</li>
+<li>Use builders to make test setup readable</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Build a builder for a 2-field object — a constructor or object literal is clearer</li>
+<li>Let the builder return a usable object before <code>build()</code> validates it</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> languages with <b>named/optional/keyword arguments</b> (Python, Kotlin, Swift, TS object params) already solve the "telescoping constructor" problem — <code>Request(url, method='POST', timeout=5000)</code> is as readable as a builder with less ceremony. Reach for a full Builder when you need <i>staged</i> construction, <i>validation at the end</i>, an <i>immutable</i> result, or a fluent DSL (like a query builder). For "just a lot of optional fields," a config object is often enough.</div>
+</div>
+</details>
+
+<details class="card" id="t5">
+<summary><span class="num">05</span><span class="ttl">Singleton — one instance, and why it's often a trap</span><span class="star">⚠ use sparingly</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you want exactly one database connection pool for the whole app, so you make it a global Singleton. Convenient — until tests can't swap it, two modules fight over its state, and it becomes hidden global coupling. Singleton is the most <b>overused and criticized</b> pattern; know it, and prefer DI (topic 18 in OOP) for most cases.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Singleton</b>: ensure a class has <b>exactly one instance</b> and provide a global access point to it.</p></div>
+  <div class="why"><h5>Why</h5><p>Some resources are genuinely single (a process-wide connection pool, a config registry, a metrics client). But the "global access point" part causes hidden coupling and testing pain.</p></div>
+  <div class="how"><h5>How</h5><p>Prefer <b>injecting a single instance</b> created at your composition root over a global <code>getInstance()</code>. If you must use a true Singleton, keep it stateless-ish and behind an interface.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Singleton vs "one instance, injected"</div><pre>  ❌ classic Singleton (global):        ✅ single instance via DI:
+     Db.getInstance().query(...)          const db = new Pool(url)   // once, at root
+        │  reachable from ANYWHERE         new OrderService(db)      // injected
+        │  hidden dependency, hard to      new UserService(db)       // shared, explicit
+        ▼  mock in tests, shared mutable   tests: new OrderService(fakeDb)
+     global state = spooky coupling      one instance, but dependencies are visible</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>A Singleton is a global variable in a nicer suit.</b> The "one instance" part is often fine; the "reachable from anywhere via <code>getInstance()</code>" part is the global-state problem that makes code hard to test and reason about — which is why DI is usually preferred.</div></div>
+<div class="analogy two"><span class="ic">🧪</span><div><b>The test tells the truth:</b> if you can't replace it with a fake in a unit test without global hacks, it's too global. Injecting "the one pool" gives you singleness <i>and</i> testability — the best of both.</div></div>
+
+<div class="code"><div class="code-label">The trap vs the preferred approach</div><pre class="js">// ❌ classic Singleton — global access point, hard to test
+class Db {
+  private static instance: Db
+  static getInstance(){ return Db.instance ??= new Db() }
+}
+Db.getInstance().query('...')   // called from anywhere; hidden global dependency
+
+// ✅ create ONE instance at the composition root, inject it (topic: DI)
+const pool = new Pool(process.env.DATABASE_URL)   // exactly one, made once
+const orders = new OrderService(pool)             // dependency is explicit + swappable
+// tests: new OrderService(fakePool)              // trivial — no global to stub</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Sometimes you truly want <b>only one</b> of something (one shared pool of database connections). The tricky part isn't making one — it's letting the whole program secretly grab it from anywhere, which makes things tangled and hard to test. Better: make the one thing at startup and <b>hand it</b> to whoever needs it. You still have exactly one; you just didn't make it a global that everyone reaches into.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Legitimate-ish singles: a process-wide <b>connection pool</b>, logger, config, or metrics client. But Java's <code>Runtime.getRuntime()</code> and many framework globals are cited as cautionary tales; modern DI containers (Spring, .NET, NestJS) provide "singleton scope" that gives you one instance <i>with</i> injection and testability. "Singleton = global state" is a well-known criticism — most style guides say prefer DI.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Prefer a single instance created at the root and injected</li>
+<li>Use a DI container's singleton scope if you need one instance</li>
+<li>Keep any true Singleton behind an interface so tests can substitute it</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Sprinkle <code>getInstance()</code> calls through business logic (hidden global coupling)</li>
+<li>Store mutable request/user state on a Singleton (thread-safety + test hell)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Singletons hide dependencies and hold <b>global mutable state</b>, which is the root of subtle test flakiness (tests leak state into each other) and concurrency bugs. There's also a lazy-init <b>thread-safety</b> trap: naïve <code>getInstance()</code> can build two instances under a race. If you take one lesson from this card: the value you usually want is "exactly one instance," and you get that far more safely by constructing it once and <i>injecting</i> it than by making it globally reachable. Reserve true Singletons for genuinely process-global, stateless services.</div>
+</div>
+</details>
+
+<details class="card" id="t6">
+<summary><span class="num">06</span><span class="ttl">Prototype — create by cloning an existing object</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you have a fully-configured "default" object — a game enemy with 40 tuned fields, or a base API-request template with auth + retries set — and you need many near-identical copies with small tweaks. Rebuilding each from scratch is wasteful and error-prone. The <b>Prototype</b> pattern <b>clones</b> a preconfigured instance and adjusts the differences.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Prototype</b>: create new objects by <b>copying</b> an existing "prototype" instance rather than constructing from scratch, then tweak what differs.</p></div>
+  <div class="why"><h5>Why</h5><p>When construction is expensive or configuration is elaborate, cloning a known-good instance is faster and avoids re-specifying dozens of fields correctly each time.</p></div>
+  <div class="how"><h5>How</h5><p>Give objects a <code>clone()</code> (or use <code>structuredClone</code>/<code>Object.create</code>), keep a registry of prototypes, and clone-then-modify to produce variants.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Clone a known-good template, tweak the diff</div><pre>   prototype:  baseRequest { auth, retries:3, timeout:5s, headers{…} }
+                     │ clone()
+                     ▼
+   variant A = clone(baseRequest); A.url = '/orders'
+   variant B = clone(baseRequest); B.url = '/users'; B.timeout = 1s
+   40 tuned fields copied for free; you only set what's DIFFERENT</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>JavaScript IS prototype-based:</b> objects inherit from other objects via the prototype chain, and <code>Object.create(proto)</code> makes a new object backed by an existing one. Prototype is baked into the language, not bolted on.</div></div>
+<div class="analogy two"><span class="ic">🧬</span><div><b>"Duplicate this and change a couple of things":</b> copying a Figma component, "Save As" on a document, or <code>git branch</code> off a known-good commit — start from a configured baseline instead of a blank page.</div></div>
+
+<div class="code"><div class="code-label">Clone a configured prototype, then tweak</div><pre class="js">const baseRequest = {                       // a fully-configured prototype
+  headers: { Authorization: token }, retries: 3, timeout: 5000, method: 'GET',
+}
+// structuredClone gives a deep copy — the base is untouched
+const getOrders = { ...structuredClone(baseRequest), url: '/orders' }
+const getUser   = { ...structuredClone(baseRequest), url: '/users', timeout: 1000 }
+// only the DIFFERENCES are specified; auth/retries/etc. come from the prototype
+
+// classic OO form: objects expose clone()
+class Enemy { clone(): Enemy { return structuredClone(this) } }</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>If you already have one thing set up <i>just right</i> and you need lots of almost-identical ones, don't rebuild each from nothing — <b>photocopy</b> the good one and change the few bits that differ. Like keeping a filled-in form as a template and copying it each time instead of writing every field again. Faster, and you won't forget a setting.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>JavaScript's prototypal inheritance and <code>Object.create</code>/<code>structuredClone</code>, Java's <code>Cloneable</code>/<code>clone()</code>, C#'s <code>MemberwiseClone</code>/<code>ICloneable</code>, prototype registries in game engines (spawn enemies from a template), deep-copying config templates, and copy-on-write data structures. Kubernetes/IaC "copy this manifest and change the name" is the same instinct.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Clone when construction is expensive or configuration is elaborate</li>
+<li>Keep a registry of prototype instances to copy from</li>
+<li>Be explicit about deep vs shallow copy</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Clone when a simple constructor call is cheaper and clearer</li>
+<li>Shallow-copy an object with nested mutable state (aliasing bugs)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the <b>shallow vs deep copy</b> trap is the whole ballgame. A shallow clone copies top-level fields but <i>shares</i> nested objects/arrays by reference — so mutating <code>copy.headers</code> also mutates the prototype's headers, corrupting every future clone. Use <code>structuredClone</code>/deep copy for anything with nested mutable state, and remember that clones skip the constructor, so any invariant checks or side effects in your constructor <i>won't run</i> — validate cloned objects if that matters.</div>
+</div>
+</details>
+
+<details class="card" id="t7">
+<summary><span class="num">07</span><span class="ttl">Object Pool — reuse expensive objects</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> opening a database connection takes 50–100ms (TCP + TLS + auth). If every query opened a fresh one, your API would crawl and the DB would drown in connection churn. An <b>object pool</b> keeps a set of ready connections and <b>lends</b> them out — the single most important reason your app can serve thousands of requests per second.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Object Pool</b>: keep a set of reusable, expensive-to-create objects (connections, threads, buffers) and <b>lend</b> them to clients, who return them instead of destroying them.</p></div>
+  <div class="why"><h5>Why</h5><p>It amortizes expensive setup (TCP/TLS handshakes, thread creation) across many uses and caps resource usage (max connections) so you don't exhaust the DB or OS.</p></div>
+  <div class="how"><h5>How</h5><p>A pool tracks idle + in-use objects; <code>acquire()</code> hands out (or creates/blocks up to a max), <code>release()</code> returns it for reuse. Health-check on return.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Borrow → use → return, capped at a max</div><pre>   ┌──── Connection Pool (max 20) ────┐
+   │ idle: [c1 c2 c3]   in-use: [c4…] │
+   └──────────────────────────────────┘
+   acquire() ─► hands out c1 (or creates if under max, or WAITS if maxed)
+   ...query...
+   release(c1) ─► c1 goes back to idle (health-checked), ready for the next caller
+   50ms handshake paid ONCE per connection, not once per query</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Connection pools are why servers scale:</b> HikariCP, pgbouncer, and every ORM's pool keep warm DB connections. Without pooling, connection setup cost and the DB's connection limit would cap you at a fraction of your throughput.</div></div>
+<div class="analogy two"><span class="ic">🧵</span><div><b>Thread pools are the same idea:</b> creating an OS thread per task is expensive, so executors keep a fixed pool of worker threads and feed them a task queue — reuse over re-create, with a hard cap.</div></div>
+
+<div class="code"><div class="code-label">Acquire / release with a max size</div><pre class="js">class ConnectionPool {
+  private idle: Conn[] = []
+  private inUse = 0
+  constructor(private max: number, private make: () =&gt; Conn) {}
+  async acquire(): Promise&lt;Conn&gt; {
+    if (this.idle.length) return this.idle.pop()!          // reuse a warm one
+    if (this.inUse &lt; this.max) { this.inUse++; return this.make() }  // or create
+    return this.waitForRelease()                          // or WAIT (backpressure)
+  }
+  release(c: Conn){ if (c.healthy()) this.idle.push(c); else this.inUse-- } // return, checked
+}
+// the 50ms TCP+TLS+auth handshake is amortized across thousands of queries</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Some things are slow and pricey to set up (like a phone call that takes a while to connect). Instead of hanging up and redialing for every little thing, you keep a few lines <b>already open</b> and share them: grab a free line, use it, hand it back. That's how a website can handle tons of visitors — it isn't opening a brand-new database connection for every single click.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Database connection pools (<b>HikariCP</b>, pgbouncer, node-postgres <code>Pool</code>, ActiveRecord/SQLAlchemy pools), HTTP keep-alive connection pools (OkHttp, undici), thread pools/executors (Java <code>ExecutorService</code>, .NET ThreadPool), byte-buffer pools (Netty), and game-engine object pools for bullets/particles. It's foundational to the scaling story in the Distributed Systems playbook.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Pool genuinely expensive resources (connections, threads, big buffers)</li>
+<li>Cap the pool size to protect the downstream resource; apply backpressure when maxed</li>
+<li>Health-check objects on return and reset their state before reuse</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Pool cheap objects — modern allocators/GC make that a pessimization</li>
+<li>Forget to <code>release()</code> (a leak that exhausts the pool and hangs the app)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the two classic bugs are <b>leaks</b> and <b>dirty state</b>. Forget to <code>release()</code> (e.g. on an error path without <code>try/finally</code>) and the pool drains until every request blocks forever waiting for a connection — a nasty production hang. And a returned object carries its <i>old state</i>: a DB connection left mid-transaction, a buffer with stale bytes. Always reset/health-check on return, always release in a <code>finally</code>, and size the pool deliberately — too small starves throughput, too large overwhelms the DB (topic: Distributed Systems). Don't pool trivially cheap objects; you'll add complexity and often lose to the GC.</div>
+</div>
+</details>
+
+<div class="part fe">Part II · <span>Structural — how objects compose</span></div>
+
+<details class="card fe-card" id="t8">
+<summary><span class="num">08</span><span class="ttl">Adapter — make an incompatible interface fit</span><span class="star">★ core</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> your app talks to a <code>PaymentGateway</code> interface (topic: abstraction), but Stripe's SDK has its own method names and shapes (<code>stripe.charges.create({amount, source})</code>). An <b>adapter</b> is the thin translation layer that makes Stripe's API <i>look like</i> your <code>PaymentGateway</code> — without changing either side.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Adapter</b>: wrap an object with an incompatible interface in a class that <b>translates</b> calls to the interface your code expects. (a.k.a. Wrapper.)</p></div>
+  <div class="why"><h5>Why</h5><p>It lets you integrate third-party or legacy code that you can't change, and keeps vendor-specific shapes out of your business logic (one translation point).</p></div>
+  <div class="how"><h5>How</h5><p>Implement your target interface; inside, delegate to the adaptee, mapping arguments and return values (and errors) between the two vocabularies.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Translate their shape into yours</div><pre>   your code ──► «PaymentGateway.charge(Money, token)»   (what you want)
+                        │  implemented by
+                 StripeAdapter
+                        │  translates → stripe.charges.create({amount, source})
+                        ▼
+                 Stripe SDK (the adaptee — unchanged, incompatible shape)</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>A travel plug adapter</b> is the literal metaphor: it doesn't change the wall socket or your device — it sits between them and makes the shapes fit. A code adapter changes neither the SDK nor your interface; it bridges their signatures.</div></div>
+<div class="analogy two"><span class="ic">🔌</span><div><b>ORMs adapt databases:</b> a <code>PostgresAdapter</code>, <code>MySQLAdapter</code>, <code>SQLiteAdapter</code> each make a specific driver satisfy the ORM's uniform interface — so the ORM core speaks one language while the drivers differ.</div></div>
+
+<div class="code"><div class="code-label">Adapter: your interface, their SDK underneath</div><pre class="js">interface PaymentGateway { charge(amount: Money, token: string): Promise&lt;Receipt&gt; }
+
+class StripeAdapter implements PaymentGateway {          // YOUR interface
+  constructor(private stripe: Stripe) {}
+  async charge(amount: Money, token: string): Promise&lt;Receipt&gt; {
+    const res = await this.stripe.charges.create({        // THEIR shape
+      amount: amount.cents, currency: amount.currency, source: token,
+    })
+    return { id: res.id, status: res.status }             // translate back to YOURS
+  }
+}
+// business code depends only on PaymentGateway; Stripe's vocabulary stops here</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Two things that should work together speak different "languages." Rather than rewrite either one, you put a <b>little translator</b> in the middle that turns your requests into theirs and their answers back into yours. Like a travel adapter for a foreign plug — nothing about the wall or your charger changes, the adapter just makes them fit.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>ORM database adapters (ActiveRecord, SQLAlchemy dialects), logging facades (<b>SLF4J</b> adapting Logback/Log4j), <code>java.io.InputStreamReader</code> (bytes→chars), Rack/WSGI adapting web servers to apps, wrapping any third-party/legacy SDK behind your own interface, and React wrappers around non-React widgets. Any "*Adapter"/"*Wrapper" class translating one API to another is this.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use adapters to keep third-party/vendor shapes at the edges</li>
+<li>Translate arguments, return values, <b>and</b> errors into your vocabulary</li>
+<li>Keep one adapter per external system you integrate</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Let the adapter leak the adaptee's types (that defeats it — a leaky abstraction)</li>
+<li>Add an adapter when you actually control both sides and could just align them</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Adapter vs its neighbors trips people up. <b>Adapter</b> changes an interface to a different one you already need (integration); <b>Decorator</b> (topic 9) keeps the <i>same</i> interface but adds behavior; <b>Facade</b> (topic 10) invents a <i>simpler</i> interface over a complex subsystem. If you're translating shapes, it's an Adapter. And beware the leaky adapter: if it returns the adaptee's raw error/response types, callers still couple to the vendor and the whole point is lost — map everything at the boundary.</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t9">
+<summary><span class="num">09</span><span class="ttl">Decorator — add behavior by wrapping</span><span class="star">★ very common</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you have an <code>HttpClient</code>, and you want to add retries, then caching, then auth headers, then request logging — <i>composably</i>, so you can mix and match per environment. A <b>decorator</b> wraps the client in another object with the <b>same interface</b> that adds one behavior and delegates the rest. Stack them like layers.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Decorator</b>: wrap an object in another object implementing the <b>same interface</b>, adding behavior before/after delegating. Decorators nest, so behaviors stack.</p></div>
+  <div class="why"><h5>Why</h5><p>It adds responsibilities at runtime without subclass explosion (the composition-over-inheritance win): retry + cache + log = three small wrappers, any combination.</p></div>
+  <div class="how"><h5>How</h5><p>Each decorator takes the wrapped object, implements the interface, does its extra bit, and calls through. Compose by nesting: <code>log(cache(retry(client)))</code>.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Same interface, stacked layers</div><pre>   request ─► LoggingClient ─► CachingClient ─► RetryClient ─► HttpClient
+                 │ log            │ hit? return   │ try 3×        │ real fetch
+                 ▼ delegate       ▼ else delegate  ▼ delegate      ▼
+   every layer is an HttpClient; caller can't tell how many wrappers are stacked
+   mix per env: prod = log(cache(retry(c)))   test = c   (no wrappers)</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Express/Rack middleware IS the decorator pattern:</b> each middleware wraps the next, adding auth, gzip, logging around the request — a stack you compose. Same for HTTP client interceptors (axios, OkHttp) that layer retry/auth/tracing.</div></div>
+<div class="analogy two"><span class="ic">☕</span><div><b>Java I/O streams are the canonical example:</b> <code>new BufferedReader(new InputStreamReader(new FileInputStream(f)))</code> — each wrapper adds buffering / decoding while keeping the <code>Reader</code>/<code>InputStream</code> interface. Python's <code>@decorator</code> syntax wraps functions the same way.</div></div>
+
+<div class="code"><div class="code-label">Wrap to add retry, then caching — same interface</div><pre class="js">interface HttpClient { get(url: string): Promise&lt;Response&gt; }
+
+class RetryClient implements HttpClient {                 // adds retries
+  constructor(private inner: HttpClient, private times = 3) {}
+  async get(url: string) {
+    for (let i = 0; i &lt; this.times; i++) {
+      try { return await this.inner.get(url) } catch (e) { if (i === this.times-1) throw e }
+    }
+    throw new Error('unreachable')
+  }
+}
+class CachingClient implements HttpClient {               // adds caching
+  private cache = new Map&lt;string, Response&gt;()
+  constructor(private inner: HttpClient) {}
+  async get(url: string){ return this.cache.get(url) ?? this.set(url) }
+  private async set(u: string){ const r = await this.inner.get(u); this.cache.set(u,r); return r }
+}
+// compose: const client = new CachingClient(new RetryClient(new RealHttpClient()))</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Take something that works, and <b>wrap it in a layer</b> that adds one extra ability — like putting a phone in a waterproof case, then a grippy case, then a wallet case. Each layer still acts like "the phone," but adds a feature. In code you stack wrappers (retry, cache, logging) around a client and mix them however you like, without inventing a new class for every combination.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Express/Koa/Rack middleware</b>, HTTP interceptors (axios, OkHttp, gRPC), Java I/O streams (<code>BufferedReader</code>, <code>GZIPInputStream</code>), Python function <code>@decorators</code>, React Higher-Order Components and hooks that wrap behavior, Redux middleware, and resilience wrappers (retry/cache/circuit-breaker layered around a client — see topic 27). It's composition-over-inheritance made concrete.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use decorators to add cross-cutting behavior (retry, cache, log, auth) composably</li>
+<li>Keep each decorator to one responsibility and delegate the rest</li>
+<li>Compose per environment (prod stacks wrappers; tests use the bare object)</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Change the interface in a decorator (that would make it an Adapter, not a Decorator)</li>
+<li>Stack so many layers that debugging a call means peeling ten wrappers</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> deeply nested decorators make <b>stack traces and debugging</b> painful — a failing request may pass through eight wrappers, and it's hard to see which layer misbehaved or what <i>order</i> they run in (order matters: caching-outside-retry vs retry-outside-caching behave differently). Keep the stack shallow and its composition explicit in one place. Also note the naming clash: Python/TS <code>@decorator</code> <i>syntax</i> and Java annotations are related but not identical to the GoF object-wrapping Decorator — same spirit, different mechanism.</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t10">
+<summary><span class="num">10</span><span class="ttl">Facade — one simple door over a complex subsystem</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> placing an order really means: validate the cart, reserve inventory, charge payment, create a shipment, send a confirmation email, and emit analytics — six subsystems. Callers shouldn't orchestrate all that. A <b>facade</b> — <code>checkout.placeOrder(cart, payment)</code> — presents one simple method that coordinates the mess behind it.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Facade</b>: a single, simplified interface in front of a complex subsystem, hiding its many moving parts behind one coherent entry point.</p></div>
+  <div class="why"><h5>Why</h5><p>It reduces the surface callers must understand, decouples them from subsystem details, and gives you one place to change the orchestration.</p></div>
+  <div class="how"><h5>How</h5><p>Create a class whose methods coordinate the subsystems for common use cases. Callers use the facade; the subsystems stay usable directly for advanced needs.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">One method, many subsystems behind it</div><pre>   caller ──► checkout.placeOrder(cart, payment)     ← the ONE simple door
+                        │  orchestrates:
+        ┌───────┬───────┼────────┬─────────┬──────────┐
+     Inventory  Pricing Payments  Shipping  Email    Analytics
+   caller doesn't know or care about the six subsystems — just the facade method</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>An SDK client is a facade:</b> the Stripe/AWS SDK gives you <code>stripe.charges.create(...)</code> over a pile of HTTP, auth, retries, and serialization. jQuery was a famous facade over inconsistent DOM/AJAX APIs. You call one friendly method; it hides the machinery.</div></div>
+<div class="analogy two"><span class="ic">🚪</span><div><b>A hotel concierge:</b> you say "arrange dinner and a taxi at 7," and one person coordinates the restaurant, the car, and the timing. You didn't call three vendors — you used one simplified interface.</div></div>
+
+<div class="code"><div class="code-label">A checkout facade coordinating six subsystems</div><pre class="js">class CheckoutFacade {
+  constructor(
+    private inventory: Inventory, private pricing: Pricing, private payments: Payments,
+    private shipping: Shipping, private email: Mailer, private analytics: Analytics,
+  ) {}
+  async placeOrder(cart: Cart, payment: PaymentInfo): Promise&lt;Order&gt; {   // the simple door
+    await this.inventory.reserve(cart)
+    const total = this.pricing.totalFor(cart)
+    const receipt = await this.payments.charge(total, payment)
+    const order = Order.create(cart, receipt)
+    await this.shipping.schedule(order)
+    await this.email.sendConfirmation(order)
+    this.analytics.track('order.placed', order)
+    return order
+  }
+}
+// callers: checkout.placeOrder(cart, payment) — that's the whole surface</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Behind a big task there are often lots of little steps and systems. A facade is a <b>single friendly button</b> that does the whole thing for you — "place the order" — while quietly handling all the steps (stock, payment, shipping, email) in the background. You press one button instead of learning to operate six machines.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>SDK clients (Stripe, AWS, Twilio) over raw HTTP, <b>jQuery</b> over the DOM, ORMs over SQL, a service-layer/use-case class over multiple repositories, high-level libraries like <code>requests</code> over <code>urllib</code>, and API gateways / backend-for-frontend endpoints that present one call over many microservices. Any "just call this one thing" wrapper over a tangle is a facade.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Provide a facade for the common workflows over a complex subsystem</li>
+<li>Keep the subsystems usable directly for advanced/edge cases</li>
+<li>Centralize orchestration in the facade so it's changed in one place</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Let the facade swell into a God object owning every rule (topic 28)</li>
+<li>Force everything through the facade if power users need direct access</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> a facade that keeps absorbing responsibilities becomes a <b>God object</b> (topic 28) — the "simple door" turns into a 2,000-line class every feature must edit, re-coupling everything you meant to decouple. Keep the facade thin: it <i>orchestrates</i> subsystems, it doesn't <i>implement</i> their logic. Also distinguish it from Adapter (topic 8): a facade <i>simplifies</i> an interface for convenience; an adapter <i>converts</i> one interface to a specific other one you're required to match.</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t11">
+<summary><span class="num">11</span><span class="ttl">Proxy — a stand-in that controls access</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> loading a user's <code>orders</code> from the DB is expensive, and you often don't touch them. An ORM gives you a <b>proxy</b>: a stand-in that looks like the orders collection but only hits the database the moment you actually access it (lazy loading). A proxy has the <b>same interface</b> as the real object but controls access to it.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Proxy</b>: a placeholder with the <b>same interface</b> as a real object that controls access to it — adding lazy loading, caching, access control, or remote calls, transparently.</p></div>
+  <div class="why"><h5>Why</h5><p>Callers use the object normally while the proxy handles cross-cutting concerns — defer expensive work, cache results, enforce permissions, or make a remote object look local.</p></div>
+  <div class="how"><h5>How</h5><p>Implement the target interface; hold (or lazily create) the real subject; intercept calls to add the concern, then delegate.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Same face, controlled access</div><pre>   caller ──► «Orders» (interface)
+                  │
+             OrdersProxy   ── first access? ──► load from DB, cache, delegate
+                  │         ── cached?      ──► return without touching DB
+                  ▼         ── unauthorized?──► throw
+             RealOrders (the expensive/remote/protected subject)</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>ORM lazy loading is a proxy:</b> Hibernate/ActiveRecord hand you a proxy for a related collection that runs the query only on first access. JavaScript's built-in <code>Proxy</code> intercepts property reads/writes to add validation, logging, or reactivity (Vue's reactivity is built on it).</div></div>
+<div class="analogy two"><span class="ic">🛡️</span><div><b>An API gateway / reverse proxy</b> (nginx, Envoy) stands in front of your services, adding auth, rate limiting, caching, and routing — the client thinks it's talking to the service, but the proxy controls access. Same pattern, network scale.</div></div>
+
+<div class="code"><div class="code-label">A lazy-loading (virtual) proxy</div><pre class="js">interface Orders { all(): Promise&lt;Order[]&gt; }
+
+class OrdersProxy implements Orders {                 // same interface as the real thing
+  private real?: RealOrders
+  private cached?: Order[]
+  constructor(private userId: string, private db: Db) {}
+  async all(): Promise&lt;Order[]&gt; {
+    if (this.cached) return this.cached                // caching concern
+    this.real ??= new RealOrders(this.userId, this.db) // lazy-create the subject
+    this.cached = await this.real.all()                // defer the expensive query
+    return this.cached
+  }
+}
+// user.orders is an OrdersProxy — the DB is hit only when you call .all()</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>A proxy is a <b>stand-in</b> that looks and acts exactly like the real thing, but sits in front to control what happens. Maybe it waits to fetch the real thing until you actually need it, or remembers the answer so it doesn't re-fetch, or checks whether you're allowed. You talk to the stand-in as if it were the real object — it quietly manages the access behind the scenes.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>ORM lazy loading (Hibernate/ActiveRecord proxies), JavaScript's <code>Proxy</code> (Vue/MobX reactivity, validation), <b>Spring AOP</b> dynamic proxies (transactions, <code>@Cacheable</code>, security), gRPC/RMI client stubs (remote proxy makes a network object look local), reverse proxies / API gateways (nginx, Envoy) for auth &amp; caching, and CDN edge caches. Protection, virtual (lazy), caching, and remote proxies are the common flavors.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use a proxy to add lazy loading, caching, access control, or remote access transparently</li>
+<li>Keep the proxy's interface identical to the real subject's</li>
+<li>Isolate the cross-cutting concern in the proxy, not the business object</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Hide expensive/remote work so well that callers get surprise latency (the "N+1 via lazy loading" trap)</li>
+<li>Put business logic in a proxy — it should only control access</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the same transparency that makes proxies elegant hides <b>cost</b>. Lazy-loading proxies are the classic cause of the <b>N+1 query problem</b> (see the N+1 case study): a loop that touches <code>user.orders</code> for 100 users silently fires 100 queries, because each access transparently hits the DB. Proxies also complicate <code>==</code>/identity (a proxy isn't the real object) and debugging (the object isn't what it appears). Use them deliberately, and know when a proxy is doing expensive work behind an innocent-looking property access.</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t12">
+<summary><span class="num">12</span><span class="ttl">Composite — treat trees and leaves uniformly</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a UI is a tree — a <code>Panel</code> contains <code>Buttons</code> and other <code>Panels</code>, nested arbitrarily. You want to call <code>render()</code> (or <code>size()</code>) on the whole tree without special-casing "is this a container or a leaf?" The <b>Composite</b> pattern lets a group of objects be treated the same as a single object.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Composite</b>: compose objects into <b>tree structures</b> and let clients treat individual objects (leaves) and compositions (branches) <b>uniformly</b> through one interface.</p></div>
+  <div class="why"><h5>Why</h5><p>It removes "is this one thing or a collection?" branching everywhere. Operations recurse naturally, and the tree can nest to any depth.</p></div>
+  <div class="how"><h5>How</h5><p>Define one interface (<code>render()</code>, <code>size()</code>); leaves implement it directly; composites implement it by iterating their children and combining results.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Branch and leaf share one interface</div><pre>          «Component: render()»
+                 │
+        ┌────────┴─────────┐
+     Panel (composite)    Button (leaf)
+        │  render() = render each child
+     ┌──┴───┐
+   Button  Panel ──► Button, Input…      call root.render(); it recurses.
+   client code never checks "leaf or container?" — same call works on both</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>The DOM and React trees are composites:</b> a <code>&lt;div&gt;</code> holds elements and other divs; you render the root and it recurses. A file system is the same — a directory contains files and directories, and <code>du -sh</code> recurses uniformly over both.</div></div>
+<div class="analogy two"><span class="ic">🌲</span><div><b>An org chart:</b> "count reports" works whether you point at an IC (leaf) or a VP (a subtree of managers and ICs). You ask the node; it sums its children. No special case for "manager vs individual."</div></div>
+
+<div class="code"><div class="code-label">Leaves and composites, one interface</div><pre class="js">interface Component { render(): string }
+
+class Button implements Component {                    // leaf
+  constructor(private label: string) {}
+  render(){ return `[${this.label}]` }
+}
+class Panel implements Component {                     // composite
+  private children: Component[] = []
+  add(c: Component){ this.children.push(c); return this }
+  render(){ return '(' + this.children.map(c =&gt; c.render()).join(' ') + ')' }  // recurse
+}
+const ui = new Panel().add(new Button('OK')).add(new Panel().add(new Button('Cancel')))
+ui.render()   // works on the whole tree — no "leaf or branch?" checks</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Think of folders on your computer: a folder can hold files <i>and</i> other folders, as deep as you like. When you ask "how big is this?", it doesn't matter if you point at a single file or a folder full of folders — you ask, and it adds everything up. Composite lets your code treat "one thing" and "a group of things" exactly the same way, so nested structures just work.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>The <b>DOM</b> and React/Vue/Flutter component trees, file systems, UI view hierarchies (Android <code>ViewGroup</code>/<code>View</code>), abstract syntax trees (compilers/linters), org charts, nested menus, scene graphs in games/graphics, and grouped shapes in design tools (group a group). Anytime "a whole" and "a part" respond to the same operations, it's Composite.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it for genuine part-whole tree hierarchies</li>
+<li>Put the recursive operation on the interface so branches and leaves share it</li>
+<li>Let composites combine their children's results</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Force leaf objects to implement child-management methods (<code>add</code>/<code>remove</code>) they can't support</li>
+<li>Use it where the data isn't actually tree-shaped</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the design tension is <b>where to put <code>add()</code>/<code>remove()</code></b>. Put child-management on the shared <code>Component</code> interface and every <i>leaf</i> is forced to implement (or throw on) methods it can't support — an LSP smell (see OOP topic 15). Put it only on <code>Composite</code> and clients must type-check to add children — losing some uniformity. There's no free lunch; pick based on whether callers need to treat everything as a potential container. Also watch recursion on very deep or cyclic trees — guard against stack overflows and cycles.</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t13">
+<summary><span class="num">13</span><span class="ttl">Bridge — vary two dimensions independently</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you send notifications of different <i>kinds</i> (alert, reminder, receipt) over different <i>channels</i> (email, SMS, push). If you subclass one per combination you get 3×3 = 9 classes, and adding a channel means adding three more. <b>Bridge</b> splits the two axes — <code>Notification</code> (kind) and <code>Channel</code> (delivery) — so they vary independently: 3 + 3 classes, not 9.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Bridge</b>: separate an <b>abstraction</b> from its <b>implementation</b> so the two can vary independently, connecting them by composition instead of a combinatorial class hierarchy.</p></div>
+  <div class="why"><h5>Why</h5><p>It prevents the M×N subclass explosion when two dimensions both change. Add a kind or a channel and it's +1 class, not +N.</p></div>
+  <div class="how"><h5>How</h5><p>The abstraction holds a reference to an implementor interface and delegates the varying part to it. Compose a kind with a channel at runtime.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Two axes, composed — not multiplied</div><pre>  ❌ M×N subclasses:                 ✅ bridge (M + N):
+   AlertEmail  AlertSms  AlertPush    «Notification» ──has-a──► «Channel»
+   ReminderEmail ReminderSms …           Alert                    EmailChannel
+   ReceiptEmail  …  (9, then 12…)         Reminder                 SmsChannel
+                                          Receipt                  PushChannel
+   add a channel → +3 classes         add a channel → +1 class. axes are independent.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Device drivers bridge OS and hardware:</b> the OS's "printing" abstraction is separate from each printer's driver (implementor). Add a printer → add a driver, not a new OS print subclass. JDBC is the same: the API (abstraction) is separate from each database driver (implementation).</div></div>
+<div class="analogy two"><span class="ic">🔀</span><div><b>Cross-platform rendering:</b> a shape/UI abstraction vs the rendering backend (Canvas, SVG, OpenGL). The remote control (abstraction) works with any TV brand (implementation) because they're bridged, not fused.</div></div>
+
+<div class="code"><div class="code-label">Notification kind × delivery channel, composed</div><pre class="js">interface Channel { deliver(to: string, text: string): Promise&lt;void&gt; }   // implementor
+class EmailChannel implements Channel { async deliver(to,t){ /* SES */ } }
+class SmsChannel   implements Channel { async deliver(to,t){ /* Twilio */ } }
+
+abstract class Notification {                        // abstraction, holds a Channel
+  constructor(protected channel: Channel) {}          // the "bridge"
+  abstract send(user: User): Promise&lt;void&gt;
+}
+class Alert extends Notification {
+  async send(user: User){ await this.channel.deliver(user.contact, '⚠ Alert: …') }
+}
+class Receipt extends Notification {
+  async send(user: User){ await this.channel.deliver(user.contact, 'Your receipt: …') }
+}
+// compose freely: new Alert(new SmsChannel());  new Receipt(new EmailChannel())
+// add a channel → one class; add a notification kind → one class. no M×N.</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>When two things both change — <i>what</i> you're sending and <i>how</i> you're sending it — don't make a separate class for every pairing (that's a huge grid). Instead, keep the "what" and the "how" as <b>two separate dials</b> and snap them together. Then adding a new "how" (say, WhatsApp) is one new piece that works with every "what," instead of one new piece per combination.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>JDBC/ODBC</b> (API bridged to DB drivers), device driver models, cross-platform GUI/rendering backends (an app UI vs Canvas/SVG/GPU), notification systems (message type × channel), payment (transaction type × gateway), and persistence abstractions over multiple stores. Whenever you catch an M×N subclass grid forming, Bridge collapses it to M+N.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when two dimensions genuinely vary independently</li>
+<li>Connect abstraction and implementor by composition, injected at runtime</li>
+<li>Reach for it when you see an M×N subclass explosion forming</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Introduce a bridge for one dimension that varies (that's over-engineering)</li>
+<li>Confuse it with Adapter — Bridge is designed up front; Adapter retrofits an existing mismatch</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Bridge is easy to <b>confuse with Strategy and Adapter</b> because all three use composition. The distinction: <b>Strategy</b> (topic 15) swaps <i>one</i> algorithm behind an interface; <b>Bridge</b> separates <i>two</i> independently-varying dimensions (abstraction <i>and</i> implementation); <b>Adapter</b> (topic 8) retrofits a mismatch between existing interfaces you didn't design together. Bridge is a <i>deliberate, up-front</i> split for anticipated two-axis variation — applying it to a single axis, or before you actually have both dimensions varying, just adds indirection you don't need yet (topic 28).</div>
+</div>
+</details>
+
+<details class="card fe-card" id="t14">
+<summary><span class="num">14</span><span class="ttl">Flyweight — share to save memory</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a text editor rendering a million characters. Giving every character its own object with font, size, and glyph metrics would blow up memory. The <b>Flyweight</b> pattern shares the <i>intrinsic</i> state (the glyph "A" at 12pt Arial is one shared object) and passes the <i>extrinsic</i> state (its position on the page) from outside — so a million characters reuse a few dozen glyph objects.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Flyweight</b>: minimize memory by <b>sharing</b> the common, immutable part (intrinsic state) of many similar objects, and supplying the variable part (extrinsic state) externally per use.</p></div>
+  <div class="why"><h5>Why</h5><p>When you have huge numbers of similar objects, sharing the identical portion turns millions of objects into a small pool plus lightweight references.</p></div>
+  <div class="how"><h5>How</h5><p>Split state into intrinsic (shared, cached in a factory) and extrinsic (passed in by the caller). A factory returns the shared flyweight for a given key.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Share the identical part; pass the rest in</div><pre>   1,000,000 characters on screen
+        │  each needs: glyph + font (intrinsic)  +  x,y position (extrinsic)
+        ▼
+   Glyph('A',12pt,Arial)  ← ONE shared object, reused everywhere 'A' appears
+        used at (0,0), (14,0), (28,0)…  ← positions passed in, not stored per-char
+   memory: ~dozens of glyph objects, not a million</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>String interning is flyweight:</b> Java/Python/C# keep one shared instance of identical string literals instead of duplicating them. Browsers cache one glyph per character/font and stamp it at many positions. Same principle: store the identical thing once.</div></div>
+<div class="analogy two"><span class="ic">🎮</span><div><b>Game tile/particle sharing:</b> a forest of 10,000 trees shares a handful of tree <i>models/textures</i> (intrinsic); each instance only stores its position and scale (extrinsic). That's how huge scenes fit in memory.</div></div>
+
+<div class="code"><div class="code-label">A glyph flyweight factory shares intrinsic state</div><pre class="js">class Glyph {                                 // intrinsic (shared, immutable) state
+  constructor(readonly char: string, readonly font: string, readonly size: number) {}
+  drawAt(x: number, y: number){ /* render this glyph at an EXTRINSIC position */ }
+}
+class GlyphFactory {
+  private pool = new Map&lt;string, Glyph&gt;()
+  get(char: string, font: string, size: number): Glyph {
+    const key = `${char}|${font}|${size}`
+    let g = this.pool.get(key)
+    if (!g){ g = new Glyph(char, font, size); this.pool.set(key, g) }  // create once
+    return g                                                            // reuse forever
+  }
+}
+// a million 'A's → one Glyph('A',...) object; positions passed to drawAt(x,y)</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>If you need a zillion things that are <i>mostly the same</i>, don't store a full copy of each. Keep <b>one master copy</b> of the shared part and just remember the little differences (like where each one goes). Like a rubber stamp: you have one stamp for the letter "A" and press it wherever you need an A — you don't carve a brand-new "A" a million times.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>String interning</b> (Java <code>String.intern()</code>, Python small-int/string caching, JS <code>Symbol</code>), browser glyph/font caches and text rendering, game engines sharing meshes/textures/tiles, immutable shared config, <code>Integer.valueOf</code>'s cached small integers, and icon/sprite atlases. Anywhere "millions of nearly-identical objects" would otherwise blow memory, flyweight sharing appears.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when object count is huge and much of the state is shared &amp; immutable</li>
+<li>Cleanly separate intrinsic (shared) from extrinsic (per-use) state</li>
+<li>Keep flyweights immutable so sharing is safe</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Apply it when you have few objects (the factory/complexity isn't worth it)</li>
+<li>Store mutable per-instance data in a shared flyweight (corrupts every user)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> flyweights <b>must be immutable</b> — since one object is shared by thousands of users, any mutable field would let one caller's change corrupt everyone else's. The whole pattern hinges on the shared (intrinsic) state being read-only. Also, it's a memory optimization with real <b>complexity cost</b> (a factory, split state, extrinsic threading through call sites) — only worth it when profiling shows object count is genuinely the problem. Modern GC and value types handle most cases; reach for Flyweight for the extreme end (millions of objects), not routinely.</div>
+</div>
+</details>
+
+<div class="part api" id="behavioral-anchor">Part III · <span>Behavioral — how objects interact</span></div>
+
+<details class="card api-card" id="t15">
+<summary><span class="num">15</span><span class="ttl">Strategy — swap the algorithm at runtime</span><span class="star">★ core</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> shipping cost is computed differently per carrier (flat, weight-based, zone-based). Baking all three into one method with a <code>switch</code> means editing it for every new carrier. <b>Strategy</b> makes each algorithm a separate interchangeable object, injected into the context: <code>new Checkout(new WeightBasedShipping())</code>.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Strategy</b>: define a family of interchangeable algorithms behind one interface and let the client pick/swap which one to use at runtime.</p></div>
+  <div class="why"><h5>Why</h5><p>It removes algorithm-selection <code>if/switch</code> ladders, makes each algorithm independently testable, and lets you add a new one without touching the others (Open/Closed).</p></div>
+  <div class="how"><h5>How</h5><p>Define a strategy interface; implement one class per algorithm; the "context" holds a strategy and delegates the varying step to it. Inject the choice.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">One interface, interchangeable algorithms</div><pre>   Checkout(context) ──► «ShippingStrategy.cost(order)»
+                                 ▲          ▲          ▲
+                          FlatRate   WeightBased   ZoneBased
+   swap at runtime: checkout.setStrategy(new ZoneBased())
+   add a carrier → new class implementing the interface. context unchanged.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>A sort comparator is a strategy:</b> <code>arr.sort(byPrice)</code> vs <code>arr.sort(byName)</code> — same sort algorithm, pluggable comparison function. In languages with first-class functions, a strategy is often <i>just a function</i> you pass in.</div></div>
+<div class="analogy two"><span class="ic">🔧</span><div><b>Passport.js auth strategies</b>, compression algorithm selection (gzip vs brotli), and pluggable pricing/tax/discount rules are all Strategy — the surrounding flow is fixed; one decision step is swappable.</div></div>
+
+<div class="code"><div class="code-label">Shipping strategies, injected into the context</div><pre class="js">interface ShippingStrategy { cost(order: Order): Money }
+class FlatRate     implements ShippingStrategy { cost(o){ return Money.of(5,'USD') } }
+class WeightBased  implements ShippingStrategy { cost(o){ return Money.of(o.weightKg*2,'USD') } }
+class ZoneBased    implements ShippingStrategy { cost(o){ /* by destination */ } }
+
+class Checkout {
+  constructor(private shipping: ShippingStrategy) {}   // the strategy is injected
+  quote(order: Order){ return order.total().add(this.shipping.cost(order)) }
+}
+new Checkout(new WeightBased()).quote(order)     // pick per carrier at runtime
+// in JS you'd often just pass a function: (order) =&gt; Money.of(order.weightKg*2,'USD')</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>When there are several ways to do one step — like several ways to calculate shipping — make each way its own little swappable module and <b>plug in</b> whichever you want. The rest of the checkout doesn't change; you just hand it a different "how to calculate shipping" piece. Adding a new way is adding a new piece, not rewiring the machine.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Sort comparators (<code>Comparator</code>, <code>sort(key=…)</code>), Passport.js auth strategies, pricing/tax/discount/shipping rule engines, compression/encryption algorithm selection, retry/backoff policies, and ML model selection. In functional languages Strategy collapses into "pass a function," which is why higher-order functions are said to subsume it.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when one step has several interchangeable algorithms</li>
+<li>Inject the strategy so it's swappable and testable</li>
+<li>In FP-friendly languages, pass a function instead of a whole class</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Create a strategy hierarchy for a single algorithm that never varies</li>
+<li>Re-introduce a <code>switch</code> to pick the strategy in the context itself</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Strategy, Bridge, and State look alike (all delegate to a composed object). Strategy is about <b>interchangeable algorithms for one step</b>, chosen by the client; <b>State</b> (topic 19) is about an object <i>changing its own behavior as its state changes</i> (and often switching itself); <b>Bridge</b> (topic 13) separates two independent dimensions. Also: in a language with first-class functions, a full Strategy <i>class</i> per algorithm is usually overkill — pass a lambda. Reserve the class form for strategies that carry configuration/state or need naming.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t16">
+<summary><span class="num">16</span><span class="ttl">Observer — publish changes to many listeners</span><span class="star">★ everywhere</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> when an order ships, several things must react — email the customer, update analytics, notify the warehouse — and you'll keep adding reactions. Hard-coding all of them into <code>ship()</code> couples it to everything. <b>Observer</b> lets the order <b>publish</b> an event and any number of <b>subscribers</b> react, without the publisher knowing who's listening.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Observer</b>: a subject maintains a list of observers and <b>notifies</b> them automatically when its state changes, so many objects react to one event without tight coupling.</p></div>
+  <div class="why"><h5>Why</h5><p>The publisher stays decoupled from reacters — add/remove listeners freely. It's the backbone of event-driven UIs and reactive systems.</p></div>
+  <div class="how"><h5>How</h5><p>Subject exposes <code>subscribe</code>/<code>unsubscribe</code>; on change it iterates observers and calls their handler. Observers register interest and react.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">One event, many independent reacters</div><pre>   Order.ship()  ──emit('shipped')──►  observers notified:
+                                          ├─ EmailObserver.on(e)   → send email
+                                          ├─ AnalyticsObserver.on(e)→ track
+                                          └─ WarehouseObserver.on(e)→ update stock
+   the Order doesn't know who's listening. add/remove observers without touching it.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>DOM events are Observer:</b> <code>element.addEventListener('click', handler)</code> — many handlers subscribe; the element notifies them all on click. Node's <code>EventEmitter</code>, RxJS Observables, and Redux <code>store.subscribe</code> are the same subscribe-and-get-notified shape.</div></div>
+<div class="analogy two"><span class="ic">📰</span><div><b>A newsletter:</b> subscribers register; when an issue drops, everyone gets it. The publisher doesn't tailor sends or know each subscriber — it just notifies the list. Unsubscribe and you stop hearing about it.</div></div>
+
+<div class="code"><div class="code-label">A subject that notifies its observers</div><pre class="js">type Handler&lt;T&gt; = (event: T) =&gt; void
+class Subject&lt;T&gt; {
+  private observers = new Set&lt;Handler&lt;T&gt;&gt;()
+  subscribe(h: Handler&lt;T&gt;){ this.observers.add(h); return () =&gt; this.observers.delete(h) } // returns unsubscribe
+  notify(event: T){ this.observers.forEach(h =&gt; h(event)) }
+}
+const shipped = new Subject&lt;Order&gt;()
+shipped.subscribe(o =&gt; mailer.sendShipped(o))       // add reactions freely,
+shipped.subscribe(o =&gt; analytics.track('shipped', o)) // without editing the publisher
+// on ship: shipped.notify(order)</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>One thing happens (an order ships) and <b>lots of others want to know</b>. Instead of the order personally telling each one, it just shouts "shipped!" and anyone who signed up to listen reacts on their own. You can add new listeners (or remove them) anytime, and the order never has to change — it doesn't even know who's listening.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>DOM <code>addEventListener</code></b>, Node <code>EventEmitter</code>, RxJS/Reactive Extensions, Redux/Vuex <code>subscribe</code>, React state + <code>useEffect</code> (components observe state), MobX/Vue reactivity, model→view notifications in MVC, and database change streams / websockets. It's the in-process cousin of Pub/Sub (topic 26), which distributes the same idea across services.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when many objects must react to one object's changes</li>
+<li>Return/track an unsubscribe handle to avoid leaks</li>
+<li>Keep observer handlers small and side-effect-focused</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Forget to unsubscribe (the #1 memory-leak source in UIs)</li>
+<li>Build long chains where observers trigger observers trigger observers (hard to trace)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the two classic bugs are <b>leaks</b> and <b>invisible cascades</b>. Forgetting to unsubscribe keeps dead objects alive (React's <code>useEffect</code> cleanup exists precisely for this); and when observers themselves emit events that trigger more observers, you get cascading updates that are hard to trace and can even loop infinitely. Notification <b>order</b> is also usually undefined — don't rely on observer A running before B. For cross-service fan-out, don't hand-roll Observer; use a real Pub/Sub broker (topic 26) with delivery guarantees.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t17">
+<summary><span class="num">17</span><span class="ttl">Command — actions as objects</span><span class="star">★ powerful</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you need undo/redo in an editor, and a background job queue where work runs later on another machine. Both need the same thing: an <b>action turned into an object</b> you can store, pass around, queue, log, and replay. That's the <b>Command</b> pattern — encapsulate "do this" (and often "undo this") as a first-class object.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Command</b>: wrap a request/action as an object with an <code>execute()</code> (and often <code>undo()</code>), decoupling the thing that <i>invokes</i> an action from the thing that <i>performs</i> it.</p></div>
+  <div class="why"><h5>Why</h5><p>Actions become storable and manipulable: queue them, log them, schedule them, retry them, and undo them. It's the basis of job queues, undo stacks, and CQRS commands.</p></div>
+  <div class="how"><h5>How</h5><p>Each action is a class with <code>execute()</code> capturing its parameters/receiver. An invoker runs (or queues/logs) commands without knowing their concrete type.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Package an action so you can queue/log/undo it</div><pre>   «Command { execute()  undo() }»
+        ├─ ChargeCard(order, amount)     ─► queue → run on a worker later
+        ├─ AddItem(cart, product)        ─► push on undo-stack; undo() reverses it
+        └─ SendEmail(to, template)       ─► log → retry on failure
+   invoker just calls cmd.execute(); it doesn't know WHAT the command does</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Job queues are Command:</b> each enqueued job (Sidekiq, Celery, BullMQ, SQS message) is a serialized action — receiver + params — executed later, elsewhere, with retries. Redux actions are commands too: plain objects describing "what to do."</div></div>
+<div class="analogy two"><span class="ic">↩️</span><div><b>Undo/redo</b> keeps a stack of command objects; <code>undo()</code> pops and reverses the last one. A restaurant order ticket is a command: it captures the request, gets queued, and the kitchen (receiver) executes it — decoupled from the waiter (invoker).</div></div>
+
+<div class="code"><div class="code-label">Commands with execute + undo (undo/redo &amp; queues)</div><pre class="js">interface Command { execute(): void; undo(): void }
+
+class AddItem implements Command {                      // an action as an object
+  constructor(private cart: Cart, private product: Product) {}
+  execute(){ this.cart.add(this.product) }
+  undo(){ this.cart.remove(this.product) }
+}
+class History {                                         // invoker + undo stack
+  private done: Command[] = []
+  run(c: Command){ c.execute(); this.done.push(c) }
+  undo(){ this.done.pop()?.undo() }
+}
+// queue variant: serialize commands and run them on a worker later (job queue)</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Instead of just <i>doing</i> something right now, you write the action down on a card — "add this item," "charge this card" — and hand the card off. Now you can stack the cards to undo them, put them in a to-do line to run later, or keep a copy in case you need to retry. Turning "do X" into a physical thing you can hold is what makes undo, queues, and scheduling possible.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Job/task queues</b> (Sidekiq, Celery, BullMQ, SQS, Kafka consumers), undo/redo stacks in editors (VS Code, Photoshop), <b>Redux actions</b> &amp; CQRS commands, database transaction logs / write-ahead logs (replayable commands), keybinding→command maps, macro recording, and the Command bus in DDD apps. Serializable commands are what make "run it later, elsewhere, and retry" possible.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it for undo/redo, queuing, scheduling, logging, and retry of actions</li>
+<li>Capture everything the action needs so it can run later/elsewhere</li>
+<li>Add <code>undo()</code> when you need reversibility</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Wrap a plain immediate function call in a Command for no reason</li>
+<li>Store un-serializable references in a command you intend to queue/persist</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> <b>undo is deceptively hard</b>. A command that captured the wrong thing can't reverse itself: to undo "delete row," you must have saved the row's prior state (which drifts into the Memento pattern, topic 23). And commands meant to be <b>queued/persisted must be serializable</b> — capturing a live DB connection or a closure over huge objects breaks "run it later on another worker." Design commands to carry <i>plain data</i> (ids, params), resolve receivers at execution time, and store enough state to reverse — or accept that some commands are execute-only.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t18">
+<summary><span class="num">18</span><span class="ttl">Chain of Responsibility — pass it down the line</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> an incoming HTTP request must pass through auth, rate-limiting, logging, and body-parsing before reaching your handler — and each step may pass it on or stop it. <b>Chain of Responsibility</b> links handlers so a request flows down the chain until one handles it (or all get a turn). This <i>is</i> web middleware.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Chain of Responsibility</b>: pass a request along a chain of handlers; each decides to handle it, transform it, and/or forward it to the next — decoupling sender from the specific receiver.</p></div>
+  <div class="why"><h5>Why</h5><p>You can add, remove, or reorder handling steps without touching the others, and no single place needs to know the whole pipeline.</p></div>
+  <div class="how"><h5>How</h5><p>Each handler holds a reference to the <code>next</code> and calls it (or short-circuits). Assemble the chain in order; feed the request to the head.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Request flows down until handled/stopped</div><pre>   request ─► Auth ─► RateLimit ─► Logging ─► BodyParser ─► Handler
+                │         │  (429?     │ next()      │            │
+              next()   stop!)        next()        next()      respond
+   any link can handle-and-stop or transform-and-forward. reorder freely.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Express/Koa/Rack middleware and Servlet filters ARE this pattern:</b> each middleware gets <code>(req, res, next)</code> and either responds or calls <code>next()</code> to pass control down the chain. It's the everyday face of Chain of Responsibility.</div></div>
+<div class="analogy two"><span class="ic">🎫</span><div><b>An approval/escalation chain:</b> a purchase request goes to your manager; if it's over their limit they pass it up to the director, then the VP — each either approves or forwards. Support tiers (L1→L2→L3) work the same way.</div></div>
+
+<div class="code"><div class="code-label">A middleware-style handler chain</div><pre class="js">type Ctx = { req: Request; res: Response }
+type Handler = (ctx: Ctx, next: () =&gt; void) =&gt; void
+
+function chain(handlers: Handler[]) {
+  return (ctx: Ctx) =&gt; {
+    let i = -1
+    const dispatch = () =&gt; { i++; if (i &lt; handlers.length) handlers[i](ctx, dispatch) }
+    dispatch()
+  }
+}
+const auth: Handler      = (c, next) =&gt; c.req.user ? next() : c.res.status(401)  // stop
+const rateLimit: Handler = (c, next) =&gt; underLimit(c) ? next() : c.res.status(429)
+const app = chain([auth, rateLimit, /* logging, */ handler])  // reorder freely</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Line up a series of checkpoints, and send the request down the line. Each checkpoint can deal with it and stop, or tweak it and wave it on to the next. Nobody needs to know the whole line — each just knows "handle or pass along." That's exactly how a web server runs a request through login-check, rate-limit, logging, and finally your code.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Express/Koa/Connect middleware</b>, Rack (Ruby), ASP.NET Core middleware, Java <b>Servlet Filters</b>, logging handler levels, DOM event bubbling/capture, exception-handler chains, ETL/processing pipelines, and approval/escalation workflows. Reordering or inserting a step without touching the rest is the everyday payoff.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it for pipelines where steps can handle, transform, or forward</li>
+<li>Keep each handler single-purpose and order the chain explicitly</li>
+<li>Allow short-circuiting (a handler that stops the chain)</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Build a chain where no handler ever handles the request (it falls off the end silently)</li>
+<li>Hide critical control flow across so many links it's impossible to follow</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> two failure modes. First, a request can <b>fall off the end unhandled</b> — if every link forwards and none handles, you get silent no-ops or hangs (in middleware, forgetting to call <code>next()</code> <i>or</i> to respond hangs the request). Second, order is <b>load-bearing and implicit</b>: put logging before auth and you log unauthenticated noise; put body-parsing after the handler and it's too late. Make the chain's order explicit and tested, ensure a terminal handler always exists, and guarantee each link either forwards or completes.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t19">
+<summary><span class="num">19</span><span class="ttl">State — behavior that changes with state</span><span class="star">★ core</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> an <code>Order</code> behaves differently depending on its status — you can pay a <code>pending</code> order, cancel a <code>paid</code> one, but not cancel a <code>shipped</code> one. Encoding this as <code>if (status === …)</code> checks scattered across every method is bug-prone. The <b>State</b> pattern makes each state an object that defines what's allowed and where you can transition.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>State</b>: let an object alter its behavior when its internal state changes, by delegating to a state object — so it "appears to change class." Each state encapsulates its allowed actions and transitions.</p></div>
+  <div class="why"><h5>Why</h5><p>It replaces sprawling status-conditionals with explicit states, makes illegal transitions impossible, and puts each state's rules in one place — a real state machine.</p></div>
+  <div class="how"><h5>How</h5><p>Model each state as a class/object implementing the same interface; the context delegates actions to its current state, which may switch the context to a new state.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Each state defines allowed actions + transitions</div><pre>   Pending ──pay()──► Paid ──ship()──► Shipped ──deliver()──► Delivered
+      │  cancel() → Cancelled   │ cancel() → refund+Cancelled   │ cancel()? ❌ blocked
+   each state OBJECT knows: which actions are legal + where they lead.
+   context.cancel() delegates to current state — no scattered status ifs.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>TCP is a state machine:</b> LISTEN → SYN-RCVD → ESTABLISHED → FIN-WAIT… each state permits different packets. A Promise is too: pending → fulfilled/rejected, and <code>.then</code> behaves per state. Workflow engines and game AI use explicit state objects.</div></div>
+<div class="analogy two"><span class="ic">🚦</span><div><b>A traffic light</b> only transitions Green→Yellow→Red→Green, and each state dictates behavior. Libraries like <b>XState</b> (JS) and Spring StateMachine make these explicit precisely because <code>if</code>-soup state logic is so error-prone.</div></div>
+
+<div class="code"><div class="code-label">Order states as objects with explicit transitions</div><pre class="js">interface OrderState { pay(o: Order): void; cancel(o: Order): void }
+
+class Pending implements OrderState {
+  pay(o){ o.setState(new Paid()) }
+  cancel(o){ o.setState(new Cancelled()) }
+}
+class Paid implements OrderState {
+  pay(o){ throw new Error('already paid') }
+  cancel(o){ o.refund(); o.setState(new Cancelled()) }
+}
+class Shipped implements OrderState {
+  pay(o){ throw new Error('already paid') }
+  cancel(o){ throw new Error('cannot cancel a shipped order') }   // illegal transition
+}
+class Order { constructor(private state: OrderState = new Pending()){}
+  setState(s: OrderState){ this.state = s }
+  pay(){ this.state.pay(this) }  cancel(){ this.state.cancel(this) } }</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Some things act differently depending on what "mode" they're in — an order that's just been placed can be paid or cancelled, but one that's already shipped can't be cancelled. Instead of scattering "if it's in this mode, then…" checks everywhere, give each <b>mode its own rulebook</b> that says what you can do and what mode you move to next. The order just asks its current mode what to do.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Order/subscription/payment lifecycles, <b>TCP connection states</b>, JavaScript Promises (pending/fulfilled/rejected), workflow &amp; approval engines, game AI (patrol/chase/flee), CI/CD pipeline stages, document review flows, and dedicated libraries like <b>XState</b>, Spring StateMachine, and AWS Step Functions. Anywhere "what's allowed depends on current status," an explicit state machine beats scattered conditionals.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when behavior and allowed actions depend on a lifecycle status</li>
+<li>Make each state own its legal actions and transitions</li>
+<li>Reach for a state-machine library when transitions get complex</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Scatter <code>if (status === …)</code> checks across many methods</li>
+<li>Model a boolean flag with two behaviors as a heavyweight state hierarchy</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> State vs Strategy again — structurally identical (delegate to a composed object), different intent. <b>Strategy</b>'s object is chosen by the <i>client</i> and doesn't change itself; <b>State</b>'s object is switched <i>by the states themselves</i> as the object progresses through a lifecycle. The real-world trap is <b>where transitions live</b>: if each state hard-codes its next states, the transition map is scattered across classes and hard to see whole. For non-trivial machines, keep the transition table explicit (or use a state-machine library) so the full set of legal transitions is visible and testable in one place.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t20">
+<summary><span class="num">20</span><span class="ttl">Template Method — fixed skeleton, pluggable steps</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> every data importer does the same dance — open source, read rows, <i>parse</i> (CSV vs JSON vs XML differs), validate, write to DB, close. The <i>skeleton</i> is identical; only a step or two vary. <b>Template Method</b> defines the skeleton in a base class and lets subclasses fill in specific steps (hook methods).</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Template Method</b>: define the <b>skeleton of an algorithm</b> in a method, deferring some steps to subclasses via overridable hook methods — the overall structure is fixed, specific steps vary.</p></div>
+  <div class="why"><h5>Why</h5><p>It removes duplicated boilerplate around the varying bits and enforces a consistent overall flow (the base controls the sequence; subclasses only fill blanks).</p></div>
+  <div class="how"><h5>How</h5><p>A concrete base method calls a sequence of steps, some abstract/overridable. Subclasses override just the steps that differ; they don't touch the sequence.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Base owns the sequence; subclass fills steps</div><pre>   Importer.run()  (template method — fixed skeleton)
+     open()          ← shared
+     rows = read()   ← shared
+     parse(rows)     ← ABSTRACT hook  ► CsvImporter / JsonImporter override
+     validate()      ← shared
+     write()         ← shared (or hook)
+     close()         ← shared
+   subclass changes parse(); it CANNOT reorder or skip the skeleton steps</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Framework lifecycle hooks are template methods:</b> React/Android call <i>their</i> fixed lifecycle and invoke <i>your</i> <code>render()</code>/<code>onCreate()</code>; test frameworks call <code>setUp()</code>/your test/<code>tearDown()</code> in a fixed order. Rails callbacks (<code>before_save</code>) hook into a fixed persistence flow.</div></div>
+<div class="analogy two"><span class="ic">📋</span><div><b>A recipe template:</b> "prep → cook → plate" is fixed; the "cook" step differs per dish. You override the step, not the sequence. It's the Hollywood principle — "don't call us, we'll call you" — the framework drives; your hooks get called.</div></div>
+
+<div class="code"><div class="code-label">A fixed import skeleton with an overridable parse step</div><pre class="js">abstract class Importer {
+  run(source: string) {                         // the TEMPLATE METHOD (fixed flow)
+    const raw = this.open(source)
+    const rows = this.parse(raw)                 // ← the varying step (hook)
+    const valid = rows.filter(r =&gt; this.validate(r))
+    this.write(valid)
+    this.close()
+  }
+  protected abstract parse(raw: string): Row[]   // subclasses fill this in
+  protected open(s: string){ /* shared */ return read(s) }
+  protected validate(r: Row){ return r.id != null }   // shared default (overridable)
+  protected write(rows: Row[]){ /* shared */ }
+  protected close(){ /* shared */ }
+}
+class CsvImporter  extends Importer { parse(raw){ return csv(raw) } }   // only the diff
+class JsonImporter extends Importer { parse(raw){ return JSON.parse(raw) } }</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Lots of jobs follow the <i>same steps in the same order</i>, with just one or two steps done differently. So write the step-by-step plan once, but leave a couple of blanks for the parts that change. Each specific version just <b>fills in the blanks</b> — it can't reshuffle the plan. Like a fill-in-the-blank recipe where only the "which spice" line changes.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Framework lifecycle hooks (React/Android/servlet lifecycles), test <code>setUp</code>/<code>tearDown</code>, Rails/Django model callbacks, Spring's <code>JdbcTemplate</code>/<code>RestTemplate</code> (they own the resource dance; you supply the query/mapper), sorting frameworks that call your comparator, and ETL/build-pipeline skeletons. It's the inheritance-based cousin of Strategy (which composes the varying step instead of overriding it).</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when many variants share one algorithm skeleton with a few varying steps</li>
+<li>Keep the sequence in the base; expose only the intended hook points</li>
+<li>Provide sensible default hooks subclasses can optionally override</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Expose so many hooks that subclasses effectively rewrite the algorithm</li>
+<li>Reach for inheritance here if composition (Strategy) fits better and is more flexible</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Template Method is <b>inheritance-based</b>, so it inherits inheritance's downsides (OOP topics 4, 6): a change to the base skeleton can break every subclass (fragile base class), and a subclass is locked to one parent. Many modern codebases prefer the <b>composition</b> alternative — pass the varying step in as a Strategy/function (e.g. <code>importer(source, parseFn)</code>) — which is more flexible and testable. Use Template Method when the shared flow is genuinely stable and the variation is naturally expressed by subtyping; otherwise inject the step.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t21">
+<summary><span class="num">21</span><span class="ttl">Iterator — traverse without exposing internals</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you want to loop over a collection — an array, a tree, a paginated API, a database cursor — <i>without</i> caring how it stores its elements. The <b>Iterator</b> pattern provides a uniform way to walk a collection one element at a time, hiding whether it's backed by an array, a linked list, or lazy pages.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Iterator</b>: provide a standard way to access elements of a collection sequentially without exposing its underlying representation.</p></div>
+  <div class="why"><h5>Why</h5><p>Client code uses one loop shape (<code>for…of</code>) over any collection, and you can iterate lazily (generators, streams, paginated data) without loading everything at once.</p></div>
+  <div class="how"><h5>How</h5><p>Expose an iterator with <code>next()</code> (returning value + done), or implement the language's iterable protocol / a generator, so standard loops work.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">One loop shape over any backing structure</div><pre>   for (const x of collection) { … }
+                │  works the same whether collection is:
+     ┌──────────┼───────────┬───────────────┬──────────────┐
+   Array     LinkedList   Tree (in-order)  DB cursor    Paginated API
+   the iterator hides HOW elements are stored/fetched; caller just walks them</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>It's built into the language:</b> JS <code>Symbol.iterator</code> + <code>for…of</code>, Python <code>__iter__</code>/generators, Java <code>Iterator</code>/<code>Iterable</code>, C# <code>IEnumerable</code>/<code>yield</code>. Database <b>cursors</b> and Node <b>streams</b> iterate huge/lazy data without loading it all.</div></div>
+<div class="analogy two"><span class="ic">📼</span><div><b>Generators are lazy iterators:</b> <code>function*</code> yields values on demand — perfect for infinite sequences or streaming a million rows one at a time, so you never hold the whole thing in memory.</div></div>
+
+<div class="code"><div class="code-label">A custom iterable + a lazy generator</div><pre class="js">class Tree {
+  constructor(public value: number, public children: Tree[] = []) {}
+  *[Symbol.iterator](): Iterator&lt;number&gt; {          // implement the iterable protocol
+    yield this.value
+    for (const child of this.children) yield* child     // recurse lazily
+  }
+}
+for (const v of new Tree(1, [new Tree(2), new Tree(3)])) console.log(v)  // 1,2,3
+
+// lazy pagination — walk an API without loading every page up front
+async function* pages(url: string){
+  let next = url
+  while (next){ const r = await fetch(next).then(x=&gt;x.json()); yield* r.items; next = r.next }
+}</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>You want to go through a bunch of things one by one, without needing to know how they're stored inside. An iterator is like a <b>tour guide</b> that just says "here's the next one… and the next…" until there are no more. The same "give me the next one" works whether it's a simple list, a tree, or pages coming from a website — and it can fetch things only as you ask, instead of all at once.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Every language's <code>for…of</code>/foreach</b>, generators (<code>function*</code>, Python <code>yield</code>), database <b>cursors</b> (stream rows without loading the table), Node/Java <b>streams</b>, paginated API iteration, RxJS/reactive sequences, and tree/graph traversals. Iterator is so fundamental it's a built-in language protocol almost everywhere — you implement it, you don't reinvent it.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Implement your language's iterable protocol so standard loops work</li>
+<li>Use lazy iterators/generators for large or streaming data</li>
+<li>Hide the backing structure behind the iterator</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Expose internal arrays/nodes for callers to traverse manually</li>
+<li>Mutate a collection while iterating it (a classic invalidation bug)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> <b>modifying a collection while iterating it</b> is the perennial bug — many languages throw <code>ConcurrentModificationException</code> or produce skipped/duplicated elements (JS iterating and <code>splice</code>-ing an array, Python mutating a dict mid-loop). Collect changes and apply them after, or iterate a copy. Second gotcha: <b>lazy iterators are single-pass and stateful</b> — a generator, DB cursor, or stream is consumed once; iterating it again yields nothing. If you need multiple passes, materialize it (to an array) or create a fresh iterator each time.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t22">
+<summary><span class="num">22</span><span class="ttl">Mediator — centralize many-to-many chatter</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a complex form where changing the country dropdown updates the state list, toggles a tax field, and enables/disables Submit. If every widget talks directly to every other widget, you get an N×N tangle. A <b>Mediator</b> puts one coordinator in the middle: widgets report to it, and it orchestrates who updates whom.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Mediator</b>: define an object that encapsulates how a set of objects interact, so they refer to the mediator instead of each other — turning many-to-many coupling into a hub-and-spoke.</p></div>
+  <div class="why"><h5>Why</h5><p>It untangles N objects each knowing about the others (N² links) into N objects knowing one mediator. Interaction logic lives in one place, not smeared across components.</p></div>
+  <div class="how"><h5>How</h5><p>Components notify the mediator of events; the mediator holds the coordination rules and tells the relevant components what to do. Components don't reference each other.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Hub-and-spoke instead of an N×N mesh</div><pre>  ❌ every widget ↔ every widget:        ✅ mediator hub:
+     Country ── State                     Country ─┐
+        │  ╲  ╱  │                        State  ──┤
+     Tax ─── Submit  (tangled mesh)       Tax    ──┼─► Mediator (coordination rules)
+                                          Submit ──┘
+   N² connections → N connections to one coordinator; rules centralized</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Air traffic control</b> is the classic mediator: planes don't negotiate directly with each other — they all talk to the tower, which coordinates. A chat room mediates between participants; nobody wires peer-to-peer.</div></div>
+<div class="analogy two"><span class="ic">🎛️</span><div><b>A Redux/Vuex store acts as a mediator</b> for UI components: components dispatch to the store and read from it, rather than talking to each other. The store centralizes the interaction logic and state.</div></div>
+
+<div class="code"><div class="code-label">A form mediator coordinating widgets</div><pre class="js">class FormMediator {
+  constructor(private country: Select, private state: Select,
+              private tax: Field, private submit: Button) {}
+  notify(sender: string, event: string) {                 // components report here
+    if (sender === 'country' &amp;&amp; event === 'change') {
+      this.state.loadFor(this.country.value)              // mediator decides the ripple
+      this.tax.setVisible(this.country.value === 'US')
+      this.submit.setEnabled(this.country.value !== '')
+    }
+  }
+}
+// widgets call mediator.notify('country','change') — they never touch each other
+</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>When lots of parts all need to talk to lots of other parts, it becomes a spaghetti mess. So you put <b>one coordinator</b> in the middle — everyone talks only to it, and it tells the right parts what to do. Like air traffic control: planes don't call each other, they all talk to the tower, and the tower keeps everyone organized.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Redux/Vuex/NgRx stores mediating components, air-traffic-control-style coordinators, chat servers, UI dialog controllers coordinating widgets, MVC/MVP controllers/presenters, and (at service scale) message brokers / API gateways coordinating microservices. Note: an in-app <b>event bus</b> blurs into Pub/Sub (topic 26) — Mediator is about <i>centralized coordination logic</i>, not just message passing.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when many components interact in complex ways</li>
+<li>Centralize the interaction rules in the mediator</li>
+<li>Keep components referencing only the mediator, not each other</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Let the mediator absorb all logic and become a God object (topic 28)</li>
+<li>Use it for simple one-to-one interactions that don't need coordination</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the mediator's whole job is to <b>hold coordination complexity</b> — which means it tends to <b>grow into a God object</b> (topic 28). You untangled the components, but if you're not careful you concentrated all that tangle into one 1,500-line coordinator that every feature must edit. Keep it focused on <i>coordination</i>, push real domain logic into the components/services, and split the mediator when it spans unrelated concerns. Also distinguish it from Observer/Pub-Sub: Mediator centralizes <i>who-tells-whom-what</i> logic; a bare event bus just delivers messages without the coordination rules.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t23">
+<summary><span class="num">23</span><span class="ttl">Memento — capture &amp; restore state (undo)</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a document editor needs undo. You must snapshot the document's state before each change and restore it later — <i>without</i> exposing or breaking the document's encapsulation. The <b>Memento</b> pattern captures an object's internal state into an opaque token you can stash and later use to roll back.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Memento</b>: capture an object's internal state in a token (the memento) that can be stored externally and used to <b>restore</b> the object later, without violating its encapsulation.</p></div>
+  <div class="why"><h5>Why</h5><p>It's how you implement undo/redo, checkpoints, and rollbacks: save known-good snapshots and return to them, while the object keeps its internals private.</p></div>
+  <div class="how"><h5>How</h5><p>The object creates a memento of its state and can restore from one; a "caretaker" (e.g. an undo stack) holds mementos but treats them as opaque.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Snapshot now, roll back later</div><pre>   Editor.save()   ──► Memento{ text, cursor }  ──► pushed onto undo-stack (caretaker)
+   ...user edits...
+   Editor.undo()   ◄── pop Memento  ◄── restore(state)
+   caretaker holds snapshots but can't read/alter them — encapsulation preserved</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Game save states and DB savepoints</b> are mementos: capture everything needed to resume/rollback to a point. A VM/container snapshot or a filesystem snapshot (ZFS, Time Machine) is the same idea at a different scale.</div></div>
+<div class="analogy two"><span class="ic">↩️</span><div><b>Undo/redo stacks</b> pair Memento with Command (topic 17): commands do the work; mementos remember the before-state so <code>undo()</code> can restore it. React's state snapshots and form "reset to saved" work this way.</div></div>
+
+<div class="code"><div class="code-label">Editor snapshots + an undo caretaker</div><pre class="js">class EditorMemento { constructor(readonly text: string, readonly cursor: number) {} }
+
+class Editor {
+  private text = ''; private cursor = 0
+  type(s: string){ this.text += s; this.cursor += s.length }
+  save(): EditorMemento { return new EditorMemento(this.text, this.cursor) }  // snapshot
+  restore(m: EditorMemento){ this.text = m.text; this.cursor = m.cursor }     // roll back
+}
+class History {                                   // caretaker — holds opaque mementos
+  private stack: EditorMemento[] = []
+  backup(e: Editor){ this.stack.push(e.save()) }
+  undo(e: Editor){ const m = this.stack.pop(); if (m) e.restore(m) }
+}</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Before you change something, take a <b>snapshot</b> — like a save point in a video game. Keep the snapshots in a pile. If you mess up, grab the last snapshot and go back to exactly how things were. The nice part: the snapshot is a sealed package — the pile that stores it doesn't get to peek inside or mess with the object's private stuff.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Undo/redo in editors (VS Code, Word, Figma), game save states, database <b>savepoints</b> and transaction rollback, VM/container/filesystem snapshots (ZFS, Time Machine), React/form "reset to saved," event-sourcing snapshots, and browser history state. Often paired with Command (topic 17) to build a full undo system.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it for undo/redo, checkpoints, and rollback</li>
+<li>Keep the memento opaque to the caretaker (only the originator reads it)</li>
+<li>Snapshot only the state you actually need to restore</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Snapshot huge state on every keystroke without limits (memory blowup)</li>
+<li>Let external code depend on the memento's internal shape</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> naïve Memento is a <b>memory hog</b> — full snapshots of large state on every change can balloon fast. Real systems bound it: cap the undo stack, snapshot at intervals, or store <i>diffs</i> instead of full copies (which shades into the Command pattern's "store the reverse operation"). There's also a <b>deep-copy</b> trap identical to Prototype's (topic 6): if the memento holds references into the live object's mutable internals instead of a copy, later edits corrupt your "saved" snapshot. Capture an immutable, deep copy of exactly the state you need to restore — no more, no less.</div>
+</div>
+</details>
+
+<details class="card api-card" id="t24">
+<summary><span class="num">24</span><span class="ttl">Visitor — add operations to a type hierarchy</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> you have an AST (abstract syntax tree) of node types — <code>NumberLit</code>, <code>BinaryOp</code>, <code>FunctionCall</code> — and you keep needing new operations over it: evaluate, pretty-print, type-check, minify. Adding each as a method on every node type bloats the nodes. <b>Visitor</b> lets you add new operations <i>without</i> touching the node classes — each operation is a separate visitor.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Visitor</b>: represent an operation to perform on the elements of an object structure as a separate <b>visitor</b> object, so you can add new operations without changing the element classes.</p></div>
+  <div class="why"><h5>Why</h5><p>When the set of types is stable but you add operations often (compilers, linters), Visitor keeps each operation in one cohesive place instead of scattering it across every type.</p></div>
+  <div class="how"><h5>How</h5><p>Each element has <code>accept(visitor)</code> that calls the visitor's method for its type (double dispatch). Each operation is one visitor implementing a method per element type.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Operations live in visitors, not in the nodes</div><pre>   AST nodes (stable):   NumberLit   BinaryOp   FunctionCall
+        each has accept(v) ─► calls v.visitNumberLit(this) etc. (double dispatch)
+   operations (grow often), each a visitor:
+        EvalVisitor      visitNumberLit  visitBinaryOp  visitFunctionCall
+        PrintVisitor     "                                             "
+        TypeCheckVisitor "                                             "
+   add an operation → new visitor class. node classes never change.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Compilers and linters run on Visitor:</b> Babel, ESLint, TypeScript, and Roslyn traverse the AST with visitors — one visitor per pass (lint rule, transform, type-check). The node types are fixed; the passes multiply.</div></div>
+<div class="analogy two"><span class="ic">🩺</span><div><b>A tax auditor visiting different account types:</b> the accounts (checking, savings, brokerage) are stable; the auditor (visitor) knows how to process each. Next year a new <i>audit</i> (visitor) arrives without changing the accounts.</div></div>
+
+<div class="code"><div class="code-label">Visitors add operations without touching node classes</div><pre class="js">interface Visitor { number(n: NumberLit): any; binary(b: BinaryOp): any }
+interface Node { accept(v: Visitor): any }
+
+class NumberLit implements Node { constructor(readonly value: number){}
+  accept(v: Visitor){ return v.number(this) } }             // double dispatch
+class BinaryOp implements Node { constructor(readonly op: string, readonly l: Node, readonly r: Node){}
+  accept(v: Visitor){ return v.binary(this) } }
+
+class EvalVisitor implements Visitor {                       // one operation = one visitor
+  number(n){ return n.value }
+  binary(b){ const l=b.l.accept(this), r=b.r.accept(this); return b.op==='+'? l+r : l*r }
+}
+// add PrintVisitor / TypeCheckVisitor later — NumberLit/BinaryOp never change</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Imagine a fixed set of shapes, and you keep inventing new things to <i>do</i> to them (measure them, paint them, count them). Instead of teaching every shape every new trick, you make a <b>"visitor" for each trick</b> that knows how to handle each shape. Want a new trick? Write a new visitor. The shapes never change — which is perfect when the shapes are settled but the list of things-to-do keeps growing.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Compilers &amp; linters</b> (Babel, ESLint, TypeScript, Roslyn, LLVM passes) traversing ASTs, document/DOM tree processing, serialization visitors, query-plan walkers in databases, and IR optimization passes. It's the go-to when you have a fixed node hierarchy and a growing set of operations over it.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it when the type set is stable but operations grow (ASTs, document trees)</li>
+<li>Keep each operation cohesive in one visitor</li>
+<li>Use it to run many passes over the same structure</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Use it when you frequently add new <i>element types</i> (every visitor must then change)</li>
+<li>Reach for it in languages with pattern matching / sum types — a match is simpler</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Visitor makes a hard <b>tradeoff</b>: adding an <i>operation</i> is cheap (one new visitor), but adding an <i>element type</i> is expensive (you must add a method to <i>every</i> visitor). So it's right only when the type hierarchy is <b>stable</b> and operations churn — the exact opposite situation wants operations-as-methods-on-types instead. This is the "expression problem." Also, Visitor is the most boilerplate-heavy GoF pattern (double dispatch, a method per type); in languages with <b>pattern matching / algebraic data types</b> (Rust, Scala, Kotlin, TS discriminated unions), a <code>switch</code>/<code>match</code> on node type is simpler and does the same job — reserve classic Visitor for OO languages lacking that.</div>
+</div>
+</details>
+
+<div class="part db">Part IV · <span>Modern &amp; Architectural</span></div>
+
+<details class="card db-card" id="t25">
+<summary><span class="num">25</span><span class="ttl">Repository — a collection-like API over storage</span><span class="star">★ backbone</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> your business logic needs to load and save <code>Order</code>s, but you don't want SQL (or Mongo queries, or HTTP calls) smeared through it. A <b>Repository</b> gives your domain a collection-like interface — <code>orders.byId(id)</code>, <code>orders.save(order)</code> — and hides whether that's Postgres, an API, or an in-memory list (crucial for tests).</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Repository</b>: mediate between the domain and data-mapping layers with a <b>collection-like interface</b> for accessing domain objects, hiding the persistence mechanism.</p></div>
+  <div class="why"><h5>Why</h5><p>It keeps persistence details out of business logic, centralizes queries, and lets you swap the real database for an in-memory fake in tests (Dependency Inversion, OOP topic 17).</p></div>
+  <div class="how"><h5>How</h5><p>Define a repository interface in the domain (<code>save</code>, <code>byId</code>, <code>findBy…</code>); implement it per datastore in the infrastructure layer; inject it into services.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Domain talks to a collection, not to SQL</div><pre>   OrderService ──► «OrderRepository { byId  save  findOpenFor(customer) }»
+                             ▲                         ▲
+                    PostgresOrderRepo          InMemoryOrderRepo (tests)
+   business logic never writes SQL; swap the implementation without touching it</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>It combines Facade + Adapter + DIP:</b> a simple collection facade over your data store, adapting the DB's API to your domain's language, with the interface owned by the domain so you can inject a fake. Spring Data and Rails/Django's ORM layers institutionalize it.</div></div>
+<div class="analogy two"><span class="ic">🗂️</span><div><b>Like an in-memory list you can query:</b> <code>orders.findOpenFor(customer)</code> reads like operating on a collection — you don't think about tables, joins, or connection pools; the repository handles the mapping.</div></div>
+
+<div class="code"><div class="code-label">Domain-owned interface, swappable implementations</div><pre class="js">interface OrderRepository {                         // defined in the DOMAIN
+  byId(id: string): Promise&lt;Order | null&gt;
+  save(order: Order): Promise&lt;void&gt;
+  findOpenFor(customerId: string): Promise&lt;Order[]&gt;
+}
+class PostgresOrderRepo implements OrderRepository { /* SQL + row↔Order mapping */ }
+class InMemoryOrderRepo implements OrderRepository {   // for fast, DB-free tests
+  private store = new Map&lt;string, Order&gt;()
+  async byId(id){ return this.store.get(id) ?? null }
+  async save(o){ this.store.set(o.id, o) }
+  async findOpenFor(c){ return [...this.store.values()].filter(o =&gt; o.customerId===c &amp;&amp; o.isOpen()) }
+}
+// OrderService(new PostgresOrderRepo()) in prod;  OrderService(new InMemoryOrderRepo()) in tests</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Your main code shouldn't be full of database commands. A repository is like a <b>librarian</b>: you say "get me order #42" or "save this order," and the librarian deals with the shelves (the database) for you. Your code just asks in plain terms. And for testing, you can swap the real library for a tiny pretend one — same requests, no real database needed.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Spring Data repositories</b>, Rails/Django ORM layers, .NET EF Core + repository, DDD aggregates loaded/saved via repositories, and the standard "swap Postgres for an in-memory repo in unit tests" pattern. It underpins hexagonal/clean architecture (the repository is a "port"). See the N+1 and DR case studies for how repository queries meet real database behavior.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Define the repository interface in the domain; implement per datastore</li>
+<li>Keep query logic in the repository, not scattered in services</li>
+<li>Provide an in-memory implementation for fast tests</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Leak the ORM's query builder / SQL types through the interface</li>
+<li>Add a repository over a trivial CRUD app where the ORM already suffices</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> two real-world traps. First, a <b>leaky repository</b> that returns the ORM's query builder or exposes <code>IQueryable</code>/lazy relations pushes persistence concerns right back into your domain — and reintroduces the N+1 problem when callers trigger lazy loads (Proxy, topic 11). Keep the interface in <i>your</i> terms, returning fully-loaded domain objects. Second, over a <b>simple CRUD</b> app the ORM's own models are often already a repository-ish abstraction — wrapping them in another layer is ceremony (see anti-patterns, topic 28). Add the pattern when you have real domain logic to protect from persistence detail, not reflexively.</div>
+</div>
+</details>
+
+<details class="card db-card" id="t26">
+<summary><span class="num">26</span><span class="ttl">Pub/Sub &amp; the event bus — decouple across services</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> when an order is placed, billing, shipping, analytics, and email must all react — and you want to add reactions later without redeploying the order service. <b>Publish/Subscribe</b> broadcasts an <code>OrderPlaced</code> event to a broker; any number of independent services subscribe. It's Observer (topic 16) scaled across processes and machines.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Pub/Sub</b>: publishers emit events to a <b>broker/topic</b> without knowing who consumes them; subscribers register interest and receive events independently. An <b>event bus</b> is the in-app version.</p></div>
+  <div class="why"><h5>Why</h5><p>It fully decouples producers from consumers (in time and space): add/remove/scale consumers without touching producers, absorb load spikes via the broker, and enable event-driven architectures.</p></div>
+  <div class="how"><h5>How</h5><p>Publish events to a topic on a broker (Kafka, RabbitMQ, Redis, SNS/SQS); consumers subscribe and process asynchronously, each at its own pace, with the broker handling delivery/retries.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Broadcast to a broker; consumers are independent</div><pre>   OrderService ──publish(OrderPlaced)──► [ topic on broker ]
+                                              ├─► Billing consumer
+                                              ├─► Shipping consumer
+                                              ├─► Analytics consumer
+                                              └─► Email consumer
+   producer doesn't know consumers exist. add one → subscribe, no producer change.</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>Kafka / RabbitMQ / SNS+SQS are pub/sub at scale:</b> the order service just emits an event; a dozen teams' services consume it independently, replay it, and scale separately. It's the foundation of event-driven microservices (see the Event-Driven playbook).</div></div>
+<div class="analogy two"><span class="ic">📻</span><div><b>A radio broadcast:</b> the station transmits; any number of radios tune in, and the station neither knows nor cares who's listening. New listeners need no change at the station — they just tune to the frequency (topic).</div></div>
+
+<div class="code"><div class="code-label">Publish an event; independent consumers react</div><pre class="js">// producer — knows only the broker + topic, not the consumers
+await broker.publish('order.placed', { orderId: order.id, total: order.total().cents })
+
+// each consumer subscribes independently, processes asynchronously, at its own pace
+broker.subscribe('order.placed', async (evt) =&gt; { await billing.invoice(evt.orderId) })
+broker.subscribe('order.placed', async (evt) =&gt; { await shipping.schedule(evt.orderId) })
+broker.subscribe('order.placed', async (evt) =&gt; { analytics.track('order', evt) })
+// add a fraud-check consumer later → just subscribe. producer never changes.</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>When something important happens, instead of the order service personally phoning every other service, it just <b>announces it once</b> to a central board ("an order was placed!"). Any service that cares is watching the board and handles its own part — billing, shipping, email. You can add a new service that watches the board anytime, and the order service never has to know or change. It's the "shout it out" idea from Observer, but across many separate programs.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Kafka</b>, RabbitMQ, Redis Pub/Sub, AWS <b>SNS+SQS</b>, Google Pub/Sub, NATS, and cloud event buses (EventBridge) — the backbone of event-driven microservices, domain events, CQRS/event sourcing, and the outbox pattern. In-process event buses (Node <code>EventEmitter</code>, Spring events, MediatR notifications) are the same shape without the network. Covered in depth in the Event-Driven Architecture playbook.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Use it to decouple producers from many independent, scalable consumers</li>
+<li>Make consumers <b>idempotent</b> (brokers deliver at-least-once → duplicates happen)</li>
+<li>Plan for dead-letter queues and retries for poison messages</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Assume exactly-once delivery or global ordering (usually you get neither for free)</li>
+<li>Use async events where you need a synchronous, immediately-consistent answer</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> Pub/Sub trades tight coupling for <b>distributed-systems hard problems</b>. Most brokers give <b>at-least-once</b> delivery, so the same event can arrive twice — consumers <i>must</i> be idempotent or you'll double-charge a card. Ordering is often only per-partition, not global. Failures need dead-letter queues and retry policies (topic 27), and debugging becomes tracing an event across services rather than reading one stack. And it's <b>eventually consistent</b>: don't use it when the caller needs an immediate, consistent result. Distinguish it from in-process Observer (topic 16) — the moment a broker and the network are involved, these concerns are yours to handle. (See the Event-Driven and Distributed Systems playbooks.)</div>
+</div>
+</details>
+
+<details class="card db-card" id="t27">
+<summary><span class="num">27</span><span class="ttl">Circuit Breaker &amp; Retry — resilience against failure</span><span class="star">★ production</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a downstream service you call gets slow/unhealthy. Naïve retries pile on and make it worse; every request hangs on a timeout, threads exhaust, and the failure <b>cascades</b> until your whole app is down. A <b>Circuit Breaker</b> detects the failures and "trips" — failing fast for a while instead of hammering a dying dependency — while <b>Retry with backoff</b> handles transient blips.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Circuit Breaker</b>: wrap a risky call so that after N failures it "opens" and fails fast (skipping the call) for a cooldown, then "half-opens" to test recovery. <b>Retry</b>: re-attempt transient failures, ideally with exponential backoff + jitter.</p></div>
+  <div class="why"><h5>Why</h5><p>They stop one slow/broken dependency from cascading into a total outage: fail fast to shed load, give the dependency room to recover, and smooth over momentary glitches.</p></div>
+  <div class="how"><h5>How</h5><p>Track failures; on threshold, open the circuit (return an error/fallback immediately); after a timeout, half-open and probe. Combine with bounded retries, timeouts, and bulkheads.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">Closed → Open → Half-open state machine</div><pre>          failures ≥ threshold
+   CLOSED ──────────────────► OPEN ── fail fast (return fallback), skip the call
+     ▲  (calls flow through)    │ after cooldown
+     │  success                 ▼
+     └──────────────────── HALF-OPEN ── let ONE probe through:
+                                          success → CLOSED, failure → OPEN
+   retry (bounded, exp. backoff + jitter) handles TRANSIENT blips underneath</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>It's an electrical circuit breaker:</b> when current surges, it trips to protect the house instead of letting wires melt. Netflix's <b>Hystrix</b>, resilience4j (Java), and <b>Polly</b> (.NET) popularized it for microservices — trip on a failing dependency to protect the caller.</div></div>
+<div class="analogy two"><span class="ic">🔁</span><div><b>Retry with backoff + jitter</b> is how clients survive transient errors (a brief network blip, a 503): wait 1s, 2s, 4s… with randomness so a thousand clients don't retry in lockstep and create a "thundering herd" that re-downs the service.</div></div>
+
+<div class="code"><div class="code-label">A minimal circuit breaker wrapping a call</div><pre class="js">class CircuitBreaker {
+  private failures = 0; private openUntil = 0
+  constructor(private threshold = 5, private cooldownMs = 30000) {}
+  async call&lt;T&gt;(fn: () =&gt; Promise&lt;T&gt;, fallback: () =&gt; T): Promise&lt;T&gt; {
+    if (Date.now() &lt; this.openUntil) return fallback()          // OPEN → fail fast
+    try {
+      const r = await fn(); this.failures = 0; return r          // success → reset
+    } catch (e) {
+      if (++this.failures &gt;= this.threshold)
+        this.openUntil = Date.now() + this.cooldownMs            // trip OPEN
+      return fallback()
+    }
+  }
+}
+// often composed as a Decorator (topic 9): breaker(retry(timeout(httpClient)))</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>If something you rely on keeps failing, don't keep desperately calling it — that just makes things worse and freezes you up too. A circuit breaker <b>notices the trouble and stops calling for a bit</b>, so you fail quickly (maybe with a backup answer) and give the sick service time to recover. Retries handle the little hiccups by trying again after a short, growing wait. Together they keep one broken piece from dragging the whole system down.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span><b>Netflix Hystrix</b>, resilience4j, <b>Polly</b> (.NET), Istio/Envoy circuit breaking, AWS SDK adaptive retries, gRPC retry policies, and service meshes. Paired with <b>timeouts</b>, <b>bulkheads</b> (isolate resource pools), and <b>rate limiting</b> as the standard resilience toolkit. Frequently implemented as stacked Decorators (topic 9) around a client. Core to the Distributed Systems playbook's resilience chapter.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Add timeouts + bounded retries with exponential backoff and <b>jitter</b></li>
+<li>Trip a circuit breaker on a failing dependency and serve a fallback</li>
+<li>Only retry <b>idempotent</b>/safe operations</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Retry without backoff/jitter (you create a thundering-herd retry storm)</li>
+<li>Retry non-idempotent calls (a "failed" charge may have succeeded → double charge)</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> retries are dangerous on <b>non-idempotent</b> operations — a payment that <i>timed out</i> may actually have <i>succeeded</i>, so a blind retry double-charges. Use idempotency keys, or only retry safe reads. And retries <i>without</i> exponential backoff + jitter cause <b>retry storms</b>: when a service wobbles, synchronized client retries pile on and finish it off (the "thundering herd"). Tune breaker thresholds carefully too — too sensitive and you trip on normal blips; too lax and you never protect the caller. Resilience patterns are essential in production but must be configured with these failure modes in mind, not just switched on. (See the Distributed Systems playbook.)</div>
+</div>
+</details>
+
+<details class="card db-card" id="t28">
+<summary><span class="num">28</span><span class="ttl">Anti-patterns — patterns misused, and pattern fever</span><span class="star">★ judgment</span><span class="chev">▶</span></summary>
+<div class="body">
+<p class="scenario"><b>Scenario:</b> a codebase where everything is a <code>*Manager</code> or <code>*Factory</code>, there are five layers of interfaces with one implementation each, a 3,000-line <code>ApplicationService</code> God object, and Singletons everywhere. Every pattern was applied — and the result is <i>harder</i> to change than plain code. Knowing the patterns includes knowing how they go wrong.</p>
+
+<div class="wwh">
+  <div class="what"><h5>What</h5><p><b>Anti-patterns</b> are common "solutions" that look reasonable but backfire — including <b>overusing</b> the very patterns in this playbook. The senior skill is restraint and fit.</p></div>
+  <div class="why"><h5>Why</h5><p>Patterns are tools with costs (indirection, ceremony, cognitive load). Applied where their problem doesn't exist, they add complexity without benefit — the opposite of their purpose.</p></div>
+  <div class="how"><h5>How</h5><p>Reach for a pattern only when you have <b>evidence</b> of its problem (repetition, real variation, a genuine boundary). Prefer the simplest thing that works; refactor <i>toward</i> a pattern when the need appears.</p></div>
+</div>
+
+<div class="ascii"><div class="lbl">The usual suspects</div><pre>   God Object / Blob   one class does everything; every change touches it
+   Singleton abuse     global mutable state disguised as a pattern (topic 5)
+   Pattern fever /      forcing Factory/Visitor/Strategy where a function/if/enum
+     "Golden Hammer"    would do — complexity for its own sake
+   Premature abstraction  interfaces &amp; layers for variation that never comes (YAGNI)
+   Spaghetti (no structure)  ↔  Lasagna (too many thin indirection layers)
+   Poltergeist          classes that just pass calls through, adding nothing</pre></div>
+
+<div class="analogy"><span class="ic">🧠</span><div><b>The "Golden Hammer":</b> "when all you have is a hammer, everything looks like a nail." A dev who just learned Visitor visitors <i>everything</i>; a team that discovered microservices splits a CRUD app into 30 of them. The tool isn't wrong — the reflexive over-application is.</div></div>
+<div class="analogy two"><span class="ic">⚖️</span><div><b>Two ditches on one road:</b> <b>spaghetti</b> (no patterns, everything tangled) and <b>lasagna</b> (so many abstraction layers you can't find the actual logic). Good design steers between under- and over-engineering — the same calibration point as OOP's "when NOT to use OOP."</div></div>
+
+<div class="code"><div class="code-label">Over-patterned vs simple-and-correct</div><pre class="js">// ❌ pattern fever: a Strategy + Factory + Singleton to add two numbers
+const adder = AdderStrategyFactory.getInstance().create('sum')
+adder.execute(a, b)
+
+// ✅ it's a function.
+const sum = (a: number, b: number) =&gt; a + b
+
+// ❌ premature abstraction: 1 interface, 1 impl, no test double, no 2nd impl in sight
+interface IUserNameFormatter { format(u: User): string }
+class UserNameFormatterImpl implements IUserNameFormatter { /* ... */ }
+// ✅ just a function until a real second case or a test seam actually appears
+const formatName = (u: User) =&gt; `${u.first} ${u.last}`</pre></div>
+
+<div class="simple"><span class="ic">🧒</span><div><span class="tag">In plain words</span>Patterns are power tools — great for the right job, silly for the wrong one. Using fancy patterns <i>everywhere</i> makes code more confusing, not less: a giant class that does everything, "managers" wrapping "managers," or a whole factory just to add two numbers. The pro move is <b>using the simplest thing that works</b>, and only reaching for a pattern once you actually hit the problem it solves. Knowing a pattern includes knowing when <i>not</i> to use it.</div></div>
+
+<div class="wild"><span class="ic">🌍</span><div><span class="tag">In the wild</span>Enterprise Java's <code>AbstractSingletonProxyFactoryBean</code> became a meme for over-abstraction; "FizzBuzz Enterprise Edition" satirizes pattern fever; "distributed monolith" is microservices misapplied; and countless codebases carry God <code>*Service</code>/<code>*Manager</code> classes and interface-per-class layers no one needed. The reaction — Go's simplicity ethos, "YAGNI," "rule of three" before abstracting — is the industry course-correcting against pattern overuse.</div></div>
+
+<div class="dodont">
+<div class="do"><h4>✅ Do</h4><ul>
+<li>Start simple; refactor toward a pattern when the problem actually appears</li>
+<li>Apply the "rule of three" — abstract after the third real repetition, not the first</li>
+<li>Split God objects; delete pass-through layers that add nothing</li>
+</ul></div>
+<div class="dont"><h4>❌ Don't</h4><ul>
+<li>Add a pattern to show you know it, or "in case we need it later" (YAGNI)</li>
+<li>Wrap every class in an interface it will never have a second implementation of</li>
+<li>Let one class or one mediator/facade become the God object again</li>
+</ul></div>
+</div>
+<div class="gotcha"><b>Gotcha:</b> the deepest lesson of this whole playbook — <b>patterns are a means, not a scorecard</b>. The goal was always code that's easy to understand and change <i>safely</i>; a pattern that doesn't serve that goal is just cost. Over-engineering (needless abstraction, premature patterns) is as real a failure as under-engineering (spaghetti, God objects), and it's the more <i>seductive</i> one because it looks sophisticated. Calibrate to the actual problem: know all 28 of these so you can <i>recognize</i> and <i>name</i> them — and have the judgment to reach for one only when its problem genuinely shows up. Simplicity is the default; patterns earn their place.</div>
+</div>
+</details>
+
+</main>
+
+<section class="quiz" id="quiz">
+  <div class="qhead">
+    <div>
+      <h2 style="font-size:1.5rem;margin-bottom:6px">🎯 Check yourself — 5 per round</h2>
+      <p class="qintro">Short rounds beat one giant quiz: answer five, see your score, go again. Progress is saved on this device, so you can leave and come back.</p>
+    </div>
+    <div class="qmeta">Round <b><span id="roundNum">1</span></b> · answered <b><span id="answeredCount">0</span></b>/28</div>
+  </div>
+  <div class="progress"><i id="progbar"></i></div>
+  <div id="quizBody"></div>
+  <div class="btns">
+    <button class="check" id="checkBtn" onclick="checkRound()">Check answers</button>
+    <button class="next" id="nextBtn" onclick="nextRound()" style="display:none">Next round →</button>
+    <span class="roundscore" id="roundScore"></span>
+    <button class="reset" onclick="resetQuiz()">Reset progress</button>
+  </div>
+  <div class="done" id="doneMsg">
+    <h3>🏆 You've been through all 28</h3>
+    <p>Every question answered. Reset to run the rounds again, or scroll up and expand any card to review.</p>
+  </div>
+</section>
+
+<footer>
+  <p><b>Design Patterns Pro Playbook</b> — creational, structural, behavioral, and modern patterns, each with the real system it powers.</p>
+  <p>Real libraries over toy shapes. Part of the Backend Engineer's Field Library · <a href="https://baluraut.github.io/field-library/">back to the library</a></p>
+</footer>
+
+</div>
+
+<script>
+/* ---------- toolbar ---------- */
+var _fz = 16;
+function fz(d){ if(d===0){_fz=16}else{_fz=Math.max(12,Math.min(22,_fz+d))} document.body.style.fontSize=_fz+'px'; }
+function toggleAll(open){ document.querySelectorAll('details.card').forEach(function(d){ d.open=open; }); }
+function openTarget(){ if(location.hash){ var el=document.querySelector(location.hash); if(el&&el.tagName==='DETAILS'){ el.open=true; el.scrollIntoView(); } } }
+window.addEventListener('hashchange', openTarget);
+
+/* ---------- syntax highlight ---------- */
+function ESC(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function hlPy(line){
+  var m = line.match(/^(\s*)(#.*)$/);
+  if(m){ return m[1]+'<span class="com">'+ESC(m[2])+'</span>'; }
+  line = ESC(line);
+  line = line.replace(/(&#39;[^&]*?&#39;|&quot;[^&]*?&quot;|'[^']*?'|"[^"]*?")/g, '<span class="s">$1</span>');
+  line = line.replace(/(#.*)$/g, '<span class="com">$1</span>');
+  line = line.replace(/\b(def|class|return|if|elif|else|for|while|import|from|as|with|try|except|finally|raise|in|not|and|or|is|None|True|False|self|lambda|yield|async|await|pass|break|continue|global|assert)\b/g, '<span class="k">$1</span>');
+  line = line.replace(/\b(\d+\.?\d*)\b/g, '<span class="n">$1</span>');
+  return line;
+}
+function hlSh(line){
+  var m = line.match(/^(\s*)(#.*)$/);
+  if(m){ return m[1]+'<span class="com">'+ESC(m[2])+'</span>'; }
+  line = ESC(line);
+  line = line.replace(/(#.*)$/g, '<span class="com">$1</span>');
+  line = line.replace(/^(\s*)(\$\s)/, '$1<span class="prompt">$2</span>');
+  line = line.replace(/\b(sudo|apt|yum|dnf|systemctl|service|docker|kubectl|git|cd|ls|cat|grep|awk|sed|curl|wget|ssh|scp|tar|chmod|chown|mkdir|rm|cp|mv|echo|export|source|kill|ps|top|df|du|find|xargs|make|npm|node|python|pip|psql|redis-cli)\b/g, '<span class="cmd">$1</span>');
+  line = line.replace(/(&#39;[^&]*?&#39;|&quot;[^&]*?&quot;|'[^']*?'|"[^"]*?")/g, '<span class="s">$1</span>');
+  line = line.replace(/(\s)(--?[a-zA-Z][\w-]*)/g, '$1<span class="v">$2</span>');
+  return line;
+}
+function hlJs(raw){
+  var out=''; var i=0; var n=raw.length;
+  while(i<n){
+    var ch=raw[i];
+    if(ch==='/'&&raw[i+1]==='/'){ out+='<span class="com">'+ESC(raw.slice(i))+'</span>'; break; }
+    if(ch==='"'||ch==="'"||ch==='`'){
+      var q=ch; var j=i+1; while(j<n&&raw[j]!==q){ if(raw[j]==='\\')j++; j++; }
+      out+='<span class="s">'+ESC(raw.slice(i,Math.min(j+1,n)))+'</span>'; i=j+1; continue;
+    }
+    var rest=raw.slice(i);
+    var kw=rest.match(/^(const|let|var|function|return|if|else|for|while|class|extends|implements|interface|new|this|super|import|export|from|as|async|await|try|catch|finally|throw|typeof|instanceof|in|of|void|yield|default|static|public|private|protected|readonly|type|enum|namespace|abstract|null|undefined|true|false)\b/);
+    if(kw){ out+='<span class="k">'+kw[1]+'</span>'; i+=kw[1].length; continue; }
+    var num=rest.match(/^(\d+\.?\d*)/);
+    if(num){ out+='<span class="n">'+num[1]+'</span>'; i+=num[1].length; continue; }
+    var fn=rest.match(/^([A-Za-z_$][\w$]*)(?=\s*\()/);
+    if(fn){ out+='<span class="fn">'+fn[1]+'</span>'; i+=fn[1].length; continue; }
+    out+=ESC(ch); i++;
+  }
+  return out;
+}
+function paintAll(sel, fn){
+  document.querySelectorAll(sel).forEach(function(p){
+    var lines = p.textContent.replace(/\n$/,'').split('\n');
+    p.innerHTML = lines.map(fn).join('\n');
+  });
+}
+paintAll('pre.py', hlPy);
+paintAll('pre.sh', hlSh);
+paintAll('pre.js', function(l){ return hlJs(l); });
+
+/* ---------- quiz ---------- */
+var STORE_KEY = 'patterns_quiz_v1';
+var QUESTIONS = [
+  { t:'01 · Why patterns', q:'The primary value of design patterns is:', opts:['They make code run faster','A shared vocabulary + proven solutions for recurring problems','They are required by SOLID','They replace writing tests'], a:1, why:'Patterns compress communication and encode proven tradeoffs — apply one when you hit its problem, never for its own sake.' },
+  { t:'02 · Factory Method', q:'A factory method exists mainly to:', opts:['Make objects immutable','Centralize "which concrete class to build + how" in one place','Replace inheritance','Speed up allocation'], a:1, why:'Callers ask for the abstraction; the factory decides the implementation, so the choice lives in one place.' },
+  { t:'03 · Abstract Factory', q:'Abstract Factory is for:', opts:['Building one object','Creating families of related objects that must stay consistent (all-AWS vs all-GCP)','Cloning objects','Pooling connections'], a:1, why:'It guarantees the pieces you get work together; swap the whole family by swapping the factory.' },
+  { t:'04 · Builder', q:'Builder mainly solves:', opts:['Global state','The telescoping-constructor problem for objects with many optional parts','Thread safety','Memory sharing'], a:1, why:'Fluent steps + validation at build(); note named/keyword args solve the simple case with less ceremony.' },
+  { t:'05 · Singleton', q:'The main criticism of Singleton is:', opts:['It’s too fast','It’s global mutable state in disguise — hidden coupling, hard to test','It can’t be subclassed','It uses too much memory'], a:1, why:'You usually want "one instance," which DI provides with testability; avoid the global getInstance() access point.' },
+  { t:'06 · Prototype', q:'The key risk when cloning (Prototype) is:', opts:['It’s always slow','Shallow copy shares nested mutable state, so edits corrupt the original/other clones','You can’t clone objects','It needs inheritance'], a:1, why:'Use deep copy (structuredClone) for nested mutable state; clones also skip the constructor’s invariant checks.' },
+  { t:'07 · Object Pool', q:'Why do connection pools make servers scale?', opts:['They compress data','They amortize expensive setup (TCP/TLS/auth) by reusing warm objects and cap resource use','They encrypt traffic','They remove the database'], a:1, why:'The handshake is paid once per connection, not per query; the max size protects the downstream resource.' },
+
+  { t:'08 · Adapter', q:'Adapter’s job is to:', opts:['Add behavior by wrapping','Translate one interface into a different one you need (e.g. Stripe SDK → your PaymentGateway)','Simplify a complex subsystem','Control access to an object'], a:1, why:'It converts shapes. Decorator keeps the same interface; Facade invents a simpler one; Proxy controls access.' },
+  { t:'09 · Decorator', q:'A decorator differs from an adapter because it:', opts:['Changes the interface','Keeps the SAME interface and adds behavior, so wrappers stack (retry+cache+log)','Creates objects','Traverses trees'], a:1, why:'Express/Rack middleware and Java IO streams are decorators — composable layers with the same interface.' },
+  { t:'10 · Facade', q:'A facade provides:', opts:['A different interface to match a requirement','One simplified entry point over a complex subsystem','A stand-in that controls access','A family of objects'], a:1, why:'Like an SDK client or jQuery over the DOM — keep it thin so it doesn’t become a God object.' },
+  { t:'11 · Proxy', q:'ORM lazy loading is which pattern, and its classic risk?', opts:['Adapter; leaky types','Proxy; the N+1 query problem from transparent DB hits','Facade; God object','Builder; telescoping'], a:1, why:'A proxy has the same interface but controls access; lazy-loading proxies silently fire queries on access.' },
+  { t:'12 · Composite', q:'Composite lets you:', opts:['Swap algorithms','Treat individual objects and trees of objects uniformly (DOM, file system)','Snapshot state','Broadcast events'], a:1, why:'One interface for leaves and branches; operations recurse. The design tension is where to put add()/remove().' },
+  { t:'13 · Bridge', q:'Bridge is the fix when:', opts:['You have one varying dimension','Two dimensions vary independently and you’d otherwise get an M×N subclass explosion','You need one instance','You need undo'], a:1, why:'Separate abstraction from implementation (notification type × channel; JDBC API × driver) → M+N, not M×N.' },
+  { t:'14 · Flyweight', q:'Flyweight saves memory by:', opts:['Compressing objects','Sharing immutable intrinsic state across many objects; passing extrinsic state in','Pooling connections','Cloning prototypes'], a:1, why:'String interning, glyph caches, game tiles — the shared part must be immutable, and it only pays off at huge object counts.' },
+
+  { t:'15 · Strategy', q:'Strategy vs State:', opts:['They’re identical','Strategy = interchangeable algorithms chosen by the client; State = behavior changes as the object’s state changes (often switching itself)','Strategy needs inheritance','State needs a factory'], a:1, why:'Structurally similar (both delegate), different intent. In FP languages Strategy is often just a passed-in function.' },
+  { t:'16 · Observer', q:'The #1 bug with Observer in UIs is:', opts:['Too fast notifications','Forgetting to unsubscribe → memory leaks (and invisible cascade updates)','Wrong return types','Immutable state'], a:1, why:'React’s useEffect cleanup exists for this; also don’t rely on notification order. Cross-service fan-out → use Pub/Sub.' },
+  { t:'17 · Command', q:'Turning an action into an object (Command) enables:', opts:['Faster execution','Queuing, logging, scheduling, retry, and undo of actions','Immutability','Tree traversal'], a:1, why:'Job queues and undo stacks are Commands; queued commands must be serializable, and undo often needs saved state (Memento).' },
+  { t:'18 · Chain of Responsibility', q:'Express/Rack middleware is an example of:', opts:['Strategy','Chain of Responsibility — each handler handles or forwards (next())','Visitor','Singleton'], a:1, why:'Order is load-bearing and implicit; ensure a terminal handler exists so requests don’t fall off the end unhandled.' },
+  { t:'19 · State', q:'The State pattern replaces:', opts:['Loops','Scattered if(status===…) conditionals with explicit state objects owning allowed actions + transitions','Interfaces','Factories'], a:1, why:'A real state machine (orders, TCP, Promises). Keep the transition map visible; use a library like XState for complex ones.' },
+  { t:'20 · Template Method', q:'Template Method vs Strategy:', opts:['They’re unrelated','Template Method fixes a skeleton and overrides steps via inheritance; Strategy injects the varying step via composition','Both use pub/sub','Both need pooling'], a:1, why:'Framework lifecycle hooks are template methods; modern code often prefers composing the step in (Strategy) for flexibility.' },
+  { t:'21 · Iterator', q:'A common iterator bug is:', opts:['Too many elements','Modifying a collection while iterating it (or reusing a single-pass lazy iterator)','Wrong colors','Immutable data'], a:1, why:'Mutate after iterating or iterate a copy; generators/cursors/streams are consumed once — materialize for multiple passes.' },
+
+  { t:'22 · Mediator', q:'Mediator turns many-to-many coupling into:', opts:['An N×N mesh','A hub-and-spoke where components talk to one coordinator, not each other','A tree','A pipeline'], a:1, why:'A Redux store or air-traffic-control coordinator; watch that the mediator doesn’t itself become a God object.' },
+  { t:'23 · Memento', q:'Memento is used to:', opts:['Broadcast events','Capture &amp; restore an object’s state (undo/redo, checkpoints) without breaking encapsulation','Swap algorithms','Adapt interfaces'], a:1, why:'The caretaker holds opaque snapshots; bound memory with caps/diffs and deep-copy to avoid aliasing the live object.' },
+  { t:'24 · Visitor', q:'Visitor is right when:', opts:['You add new element types often','The type hierarchy is stable but you add operations often (ASTs in compilers/linters)','You need one instance','You need retries'], a:1, why:'Adding an operation is cheap; adding a type is expensive (the expression problem). Pattern matching often replaces it.' },
+  { t:'25 · Repository', q:'A Repository gives the domain:', opts:['Raw SQL access','A collection-like interface over storage, hiding the datastore (and swappable for tests)','A UI layer','A message broker'], a:1, why:'Interface owned by the domain, implemented per store; a leaky repo (exposing the query builder) reintroduces N+1.' },
+  { t:'26 · Pub/Sub', q:'A must-do when consuming most brokers is:', opts:['Assume exactly-once delivery','Make consumers idempotent, because delivery is usually at-least-once (duplicates happen)','Assume global ordering','Process synchronously'], a:1, why:'Pub/Sub decouples producers/consumers but brings distributed concerns: duplicates, per-partition order, DLQs, eventual consistency.' },
+  { t:'27 · Circuit Breaker', q:'Retrying a timed-out payment without safeguards can:', opts:['Never hurt','Double-charge — the call may have succeeded; retries need idempotency + backoff + jitter','Speed it up','Trip the breaker'], a:1, why:'Only retry idempotent ops; backoff+jitter avoids retry storms; the breaker fails fast to stop cascading failure.' },
+  { t:'28 · Anti-patterns', q:'The senior lesson about patterns is:', opts:['Use as many as possible','Patterns are a means, not a scorecard — over-engineering is as real a failure as spaghetti; apply one only when its problem appears','Never use patterns','Patterns replace judgment'], a:1, why:'God objects, Singleton abuse, and pattern fever all backfire. Start simple; refactor toward a pattern on real evidence (rule of three).' },
+];
+
+var ROUND_SIZE = 5;
+var answers = loadAnswers();
+var viewRound = firstUnfinishedRound();
+
+function loadAnswers(){ try{ var r = JSON.parse(localStorage.getItem(STORE_KEY)); return (r&&typeof r==='object')?r:{}; }catch(e){ return {}; } }
+function saveAnswers(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(answers)); }catch(e){} }
+function answeredNum(){ return Object.keys(answers).length; }
+function totalRounds(){ return Math.ceil(QUESTIONS.length/ROUND_SIZE); }
+function firstUnfinishedRound(){
+  for(var r=0;r<totalRounds();r++){
+    for(var i=r*ROUND_SIZE;i<Math.min((r+1)*ROUND_SIZE,QUESTIONS.length);i++){
+      if(!(i in answers)) return r;
+    }
+  }
+  return totalRounds()-1;
+}
+function updateMeta(){
+  document.getElementById('roundNum').textContent = Math.min(viewRound+1,totalRounds());
+  document.getElementById('answeredCount').textContent = answeredNum();
+  document.getElementById('progbar').style.width = (answeredNum()/QUESTIONS.length*100)+'%';
+}
+function renderRound(){
+  var body = document.getElementById('quizBody');
+  var start = viewRound*ROUND_SIZE, end = Math.min(start+ROUND_SIZE,QUESTIONS.length);
+  var allAnsweredGlobally = answeredNum()>=QUESTIONS.length;
+  var html = '';
+  for(var i=start;i<end;i++){
+    var Q = QUESTIONS[i];
+    var picked = answers[i];
+    var revealed = (picked!==undefined);
+    html += '<div class="q'+(revealed?' revealed':'')+'" data-qi="'+i+'">';
+    html += '<p class="qt"><span class="tag">'+Q.t+'</span>'+Q.q+'</p>';
+    for(var o=0;o<Q.opts.length;o++){
+      var cls='';
+      if(revealed){ if(o===Q.a) cls=' right'; else if(o===picked) cls=' wrong'; }
+      html += '<label class="'+cls.trim()+'" data-oi="'+o+'"><input type="radio" name="q'+i+'" style="display:none" '+(picked===o?'checked':'')+'>'+String.fromCharCode(65+o)+'. '+Q.opts[o]+'</label>';
+    }
+    html += '<p class="why">Why: '+Q.why+'</p>';
+    html += '</div>';
+  }
+  body.innerHTML = html;
+  if(!allAnsweredGlobally){
+    body.querySelectorAll('.q').forEach(function(qd){
+      if(qd.classList.contains('revealed')) return;
+      qd.querySelectorAll('label').forEach(function(lb){
+        lb.addEventListener('click', function(){
+          var qi=+qd.getAttribute('data-qi');
+          if(qi in answers) return;
+          qd.querySelectorAll('label').forEach(function(x){ x.dataset.sel='0'; });
+          lb.dataset.sel='1';
+          qd.querySelectorAll('input')[+lb.getAttribute('data-oi')].checked=true;
+        });
+      });
+    });
+  }
+  var thisRoundDone = true;
+  for(var k=start;k<end;k++){ if(!(k in answers)){ thisRoundDone=false; break; } }
+  document.getElementById('checkBtn').style.display = thisRoundDone? 'none':'inline-block';
+  document.getElementById('nextBtn').style.display = (thisRoundDone && end<QUESTIONS.length)? 'inline-block':'none';
+  document.getElementById('roundScore').textContent = thisRoundDone? roundScoreText():'';
+  document.getElementById('doneMsg').style.display = (answeredNum()>=QUESTIONS.length)? 'block':'none';
+  updateMeta();
+}
+function roundScoreText(){
+  var start=viewRound*ROUND_SIZE, end=Math.min(start+ROUND_SIZE,QUESTIONS.length);
+  var right=0,tot=0;
+  for(var i=start;i<end;i++){ if(i in answers){ tot++; if(answers[i]===QUESTIONS[i].a) right++; } }
+  return right+'/'+tot+' correct';
+}
+function checkRound(){
+  var start=viewRound*ROUND_SIZE, end=Math.min(start+ROUND_SIZE,QUESTIONS.length);
+  var body=document.getElementById('quizBody');
+  var missing=false;
+  for(var i=start;i<end;i++){
+    if(i in answers) continue;
+    var qd=body.querySelector('.q[data-qi="'+i+'"]');
+    var sel=qd.querySelector('label[data-sel="1"]');
+    if(!sel){ missing=true; qd.style.outline='1px solid var(--red)'; setTimeout((function(x){return function(){x.style.outline='';};})(qd),600); continue; }
+    answers[i]=+sel.getAttribute('data-oi');
+  }
+  if(missing) return;
+  saveAnswers();
+  renderRound();
+}
+function nextRound(){ if((viewRound+1)*ROUND_SIZE<QUESTIONS.length){ viewRound++; renderRound(); window.scrollTo({top:document.getElementById('quiz').offsetTop-10,behavior:'smooth'}); } }
+function resetQuiz(){ answers={}; saveAnswers(); viewRound=0; renderRound(); }
+
+renderRound();
+openTarget();
+</script>
+</body>
+</html>
